@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Solar BNST</title>
+<style>
+:root{
+  --baby:#FFD6E7; --cream:#FFF9F5; --white:#FFFFFF; --red:#C8102E; --red-d:#8E0B21; --red-hover:#A50D26;
+  --green:#1F6B43; --green-d:#134A2E; --green-l:#E4F1E8; --gold:#FFD86B; --ink:#1F2A22; --muted:#5C6B60; --line:#E7D9C2;
+  --ok:#1F7A46; --warn:#7A5200; --err:#B3261E;
+  --font-display:Georgia,"Noto Serif","Droid Serif","Times New Roman",serif;
+  --font-body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:var(--font-body);color:var(--ink);display:flex;flex-direction:column;
+  background:radial-gradient(circle,rgba(31,107,67,.12) 1.5px,transparent 2px) 0 0/22px 22px,var(--cream)}
+
+/* Snow layer (behind content) */
+.snow{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.75;
+  background-image:radial-gradient(circle,#fff 2px,transparent 2.5px),radial-gradient(circle,#fff 1.5px,transparent 2px);
+  background-size:97px 131px,61px 89px;background-position:0 0,30px 40px;animation:snowfall 16s linear infinite}
+@keyframes snowfall{from{background-position:0 0,30px 40px}to{background-position:0 900px,30px 940px}}
+
+/* Header: argyle with a scalloped red edge */
+.top{position:sticky;top:0;z-index:5;padding:14px 18px;padding-top:calc(14px + env(safe-area-inset-top,0px));
+  display:flex;align-items:center;justify-content:space-between;color:#fff;
+  background:repeating-linear-gradient(45deg,transparent 0 22px,rgba(255,255,255,.16) 22px 23px),
+    repeating-linear-gradient(-45deg,transparent 0 22px,rgba(255,255,255,.16) 22px 23px),
+    repeating-linear-gradient(45deg,var(--green) 0 44px,#2c7d52 44px 88px)}
+.top::after{content:"";position:absolute;left:0;right:0;bottom:-12px;height:12px;pointer-events:none;
+  background:radial-gradient(circle at 50% 0,var(--red) 11px,transparent 12px) 0 0/24px 12px repeat-x}
+.brand{display:flex;align-items:center;font-family:var(--font-display);font-size:1.35rem;font-weight:700;letter-spacing:.2px}
+.brand .wordmark{color:#fff;font-style:normal}
+.brand em{color:var(--gold);font-style:italic}
+.logo{width:46px;height:46px;margin-right:10px;flex:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.25))}
+#whoami{color:#E4F1E8;font-size:.82rem}
+
+/* Lights, tree band, and candy stripe under the header */
+.lights{height:16px;margin-top:-2px;position:relative;z-index:6;
+  background:radial-gradient(circle,var(--gold) 3px,transparent 3.5px) 0 4px/30px 16px repeat-x,linear-gradient(var(--green),var(--green)) 0 8px/100% 2px no-repeat;
+  animation:twinkle 2.4s ease-in-out infinite alternate}
+@keyframes twinkle{from{opacity:.55}to{opacity:1}}
+.trees{height:50px;margin-top:6px;position:relative;z-index:2;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='46'%3E%3Cpath d='M23 6 L34 26 L12 26 Z M23 18 L38 40 L8 40 Z M21 40 h4 v5 h-4 Z' fill='none' stroke='%231F6B43' stroke-width='2'/%3E%3C/svg%3E") 0 0/46px 46px repeat-x}
+.candy{height:8px;position:relative;z-index:2;background:repeating-linear-gradient(-45deg,var(--red) 0 8px,#fff 8px 16px)}
+
+#app{position:relative;z-index:2;flex:1;overflow-y:auto;padding:18px 16px calc(104px + env(safe-area-inset-bottom,0px));max-width:680px;width:100%;margin:0 auto}
+
+/* Cards with a 3D green edge */
+.card{position:relative;background:var(--white);border:2px solid var(--green);border-radius:20px;padding:18px;margin-bottom:18px;box-shadow:0 5px 0 var(--green-d)}
+h2{font-family:var(--font-display);color:var(--red);margin:0 0 10px;font-size:1.2rem;font-weight:700}
+h3{font-family:var(--font-display);font-style:italic;font-size:1rem;color:var(--green);margin:22px 6px 10px;font-weight:700}
+label{display:block;font-weight:700;font-size:.86rem;margin:4px 0;color:var(--green-d)}
+input,select,textarea{width:100%;padding:12px 14px;border:2px solid #CFE3D5;border-radius:14px;font-size:16px;font-family:inherit;background:#fff;color:var(--ink);min-height:46px;outline:none;margin-top:4px}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,216,107,.45)}
+textarea{min-height:88px;resize:vertical}
+.check{display:flex;gap:10px;align-items:flex-start;font-weight:500;color:var(--ink)}
+.check input{width:auto;min-height:0;margin-top:3px;accent-color:var(--red)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.two{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+.wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.row-form{display:flex;gap:8px;align-items:center;margin-top:8px}
+.row-form select,.row-form input{margin-top:0}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 22px;border-radius:999px;border:none;background:var(--red);color:#fff;font-family:var(--font-body);font-weight:700;font-size:.95rem;cursor:pointer;min-height:46px;box-shadow:0 4px 0 var(--red-d);transition:transform .08s,background .15s}
+.btn:hover{background:var(--red-hover)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--red-d)}
+.btn.block{width:100%}
+.btn.ghost{background:#fff;color:var(--green-d);border:2px solid var(--green);box-shadow:none}
+.btn.ghost:hover{background:var(--green-l)}
+.btn.sm{padding:7px 14px;font-size:.82rem;min-height:34px}
+
+.pill{display:inline-block;padding:4px 11px;border-radius:999px;font-size:.72rem;font-weight:700;background:var(--green-l);color:var(--green-d);border:1px solid #BFD9C8;white-space:nowrap}
+.pill.ok{background:#DDEFE3;color:var(--ok);border-color:#A9D9BA}
+.pill.warn{background:#FFF0C7;color:var(--warn);border-color:#F2D27A}
+.pill.err{background:#FBE0DE;color:var(--err);border-color:#F2B8B3}
+.tx{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;color:var(--red);word-break:break-all}
+.tx.big{font-size:1.15rem}
+.muted{color:var(--muted);font-size:.84rem}
+.err{color:var(--err)}
+.notice{padding:12px 14px;border-radius:14px;background:#FFF0C7;border:2px dashed var(--gold);color:#5A4300;font-size:.86rem;margin-bottom:14px}
+.empty{text-align:center;color:var(--muted);padding:24px 12px}
+.line{display:flex;justify-content:space-between;padding:10px 0;border-bottom:2px dashed var(--line);font-size:.92rem}
+.line:last-child{border-bottom:none}
+.item{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-top:2px dashed var(--line);flex-wrap:wrap}
+.item:first-child{border-top:none}
+.notif{display:flex;gap:12px;padding:10px 0;border-top:2px dashed var(--line)}
+.notif:first-child{border-top:none}
+.notif .dot{width:10px;height:10px;border-radius:50%;background:var(--red);margin-top:7px;flex:none}
+.notif.read{opacity:.55}
+.notif.read .dot{background:transparent}
+ol.tl{list-style:none;padding:0;margin:10px 0 0}
+ol.tl li{position:relative;padding:4px 0 12px 22px;border-left:3px solid #CFE3D5;margin-left:6px;font-size:.9rem}
+ol.tl li::before{content:"";position:absolute;left:-7px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--red);border:2px solid #fff}
+ol.tl li small{display:block;color:var(--muted)}
+
+/* Hero: red night scene with a tree, Pip, and gifts */
+.hero{position:relative;overflow:hidden;display:flex;justify-content:space-between;align-items:center;gap:12px;color:#fff;border-radius:22px;padding:22px 20px 26px;margin-bottom:18px;
+  background:radial-gradient(circle at 80% 15%,rgba(255,216,107,.3),transparent 35%),linear-gradient(160deg,#B31A2C 0%,#8E0B21 70%,#6A0818 100%);border:2px solid var(--gold);box-shadow:0 5px 0 var(--red-d)}
+.hero::before{content:"";position:absolute;left:-10%;right:-10%;bottom:-22px;height:60px;border-radius:50%;background:#fff;opacity:.95}
+.hero::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle,rgba(255,255,255,.9) 1.5px,transparent 2px) 0 0/34px 34px;opacity:.18}
+.hero > *{position:relative;z-index:1}
+.hero h1{font-family:var(--font-display);font-size:1.5rem;font-weight:700;margin:4px 0 6px;color:#fff}
+.hero p{margin:0;font-size:.86rem;color:#FCE8E8}
+.hero-k{font-family:var(--font-display);font-style:italic;font-size:.95rem;color:var(--gold)}
+.hero-ico{width:72px;height:72px;flex:none}
+.hero-ico.small{width:88px;height:88px;display:block;margin:6px auto 10px;overflow:visible}
+.scene{position:relative;width:160px;height:150px;flex:none}
+.scene svg{position:absolute}
+.scene .s-main{left:6px;bottom:0;width:106px;height:126px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.3));animation:sway 4s ease-in-out infinite}
+.scene .s-pip{right:0;bottom:2px;width:70px;height:80px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.3))}
+.scene .s-g1{right:52px;bottom:0;width:44px;height:44px}
+.scene .s-g2{left:0;bottom:0;width:38px;height:38px}
+@keyframes sway{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1.2deg)}}
+
+/* Stat tiles */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{position:relative;background:var(--white);border:2px solid var(--green);border-radius:16px;padding:14px;box-shadow:0 3px 0 var(--green-d);min-width:0}
+.tile .k{font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--green-d);letter-spacing:.6px;display:flex;align-items:center}
+.tile .v{font-family:var(--font-display);font-size:1.4rem;font-weight:700;color:var(--red);margin-top:6px;line-height:1.25;word-break:break-word}
+.tile .s{font-size:.74rem;color:var(--muted);margin-top:6px}
+.ti{width:24px;height:24px;margin-right:6px;flex:none}
+
+/* Chart */
+.ctl{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.ctl select{width:auto;min-width:150px;margin:0;min-height:40px;padding:8px 12px}
+.chart{display:flex;align-items:flex-end;gap:3px;height:160px;border-bottom:2px solid var(--green);padding-top:6px}
+.col{flex:1;height:100%;display:flex;align-items:flex-end}
+.bar2{width:100%;background:linear-gradient(180deg,var(--gold),var(--red));border-radius:4px 4px 0 0}
+.axis{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-top:6px}
+.empty-ico{display:block;width:84px;height:84px;margin:0 auto 6px}
+
+/* Bottom bar with gold active tab and a red plus button */
+nav.bottom{position:fixed;left:0;right:0;bottom:0;background:var(--green);display:flex;justify-content:space-around;align-items:flex-end;padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));z-index:10;box-shadow:0 -4px 0 var(--green-d)}
+nav.bottom button{flex:1;min-width:0;background:none;border:2px solid transparent;border-radius:16px;color:#CDE6D5;font-family:var(--font-body);font-size:.60rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:54px;padding:4px 0;white-space:nowrap;margin:0 2px}
+nav.bottom button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+nav.bottom button.active{background:var(--gold);color:var(--ink);border-color:var(--red)}
+nav.bottom button.plus{position:relative;gap:3px}
+nav.bottom button.plus::before{content:"";width:22px;height:22px;flex:none}
+nav.bottom button.plus .fab{position:absolute;top:-30px;left:50%;margin-left:-27px;background:var(--red);color:#fff;width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 5px 0 var(--red-d);border:4px solid var(--gold)}
+nav.bottom button.plus .fab svg{width:24px;height:24px;stroke-width:2.6}
+nav.bottom button.plus.active{background:none}
+nav.bottom button.plus.active .fab{background:var(--red)}
+
+.toast{position:fixed;left:50%;bottom:112px;transform:translateX(-50%) translateY(20px);background:var(--green-d);color:#fff;padding:10px 18px;border-radius:999px;font-size:.88rem;font-weight:700;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;max-width:90%;z-index:20}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{background:var(--red)}
+
+@media (prefers-reduced-motion:reduce){.snow,.lights,.scene .s-main{animation:none}}
+details.login-toggle summary{list-style:none;cursor:pointer;margin-top:18px}
+details.login-toggle summary::-webkit-details-marker{display:none}
+details.login-toggle[open] summary{opacity:.75}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:.7rem;font-weight:800;letter-spacing:.6px;white-space:nowrap;vertical-align:middle}
+.badge i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.hier{list-style:none;padding:0;margin:0}
+.hier li{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1.5px dashed var(--line)}
+.hier li:last-child{border-bottom:none}
+#whoami .badge{background:#fff!important;border-color:#fff!important;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.pic-card{padding:0;overflow:hidden;margin-bottom:16px}
+.pic-banner{height:150px;background:radial-gradient(circle at 18% 30%,rgba(255,255,255,.18) 0 3px,transparent 4px) 0 0/34px 34px,linear-gradient(135deg,#B3173A 0%,#8E0B21 45%,#134A2E 100%);background-size:cover;background-position:center;border-bottom:4px solid var(--gold)}
+.pic-row{display:flex;gap:14px;align-items:flex-end;padding:0 18px;margin-top:-52px}
+.pic-avatar{width:96px;height:96px;border-radius:50%;border:5px solid #fff;background:var(--baby) center/cover no-repeat;display:flex;align-items:center;justify-content:center;font:700 2rem var(--font-display);color:var(--red-d);flex:0 0 auto;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.pic-id{padding-bottom:6px;min-width:0;overflow-wrap:anywhere}
+.pic-id strong{font-family:var(--font-display);font-size:1.2rem;color:var(--green-d)}
+.pic-id .badge{margin-left:4px}
+.pic-id .muted{font-size:.9rem;margin-top:2px}
+.pic-bio{margin:12px 18px 0;color:var(--ink);line-height:1.5}
+.pic-actions{display:flex;flex-wrap:wrap;gap:8px;margin:14px 18px 0}
+.pic-hint{margin:10px 18px 16px;font-size:.8rem;color:var(--muted)}
+.pic-pending{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:14px 18px 0;padding:10px 12px;border-radius:14px;background:var(--green-l);border:1.5px dashed var(--green);font-size:.9rem}
+.gc-invite p{margin:0}
+.gc-invite a{color:var(--red);font-weight:700}
+.restricted-card .wrap{justify-content:center}
+.lb{background:radial-gradient(circle,rgba(255,255,255,.55) 1.5px,transparent 2px) 0 0/22px 22px,linear-gradient(180deg,#FFF8EE,#FCEFE0);border-radius:26px;padding:16px 14px 20px;border:2px solid #1F6B43;box-shadow:0 6px 0 #B3173A,0 10px 22px rgba(31,107,67,.18);position:relative;overflow:hidden}
+.lb::before{content:"";position:absolute;left:0;right:0;top:0;height:10px;background:repeating-linear-gradient(90deg,#B3173A 0 18px,#FFF8EE 18px 26px,#1F6B43 26px 44px,#FFF8EE 44px 52px)}
+.lb-tabs{display:flex;gap:6px;background:#1F6B43;border-radius:999px;padding:5px;margin:8px 0 14px;box-shadow:inset 0 2px 4px rgba(0,0,0,.25)}
+.lb-tab{flex:1;border:0;background:transparent;color:#FFF3D6;font:700 .95rem var(--font-body);padding:9px 6px;border-radius:999px;cursor:pointer;transition:background .15s,color .15s}
+.lb-tab.on{background:linear-gradient(180deg,#FFE79A,#FFD04D);color:#8B1A1A;box-shadow:0 2px 0 #C9951B,0 4px 10px rgba(0,0,0,.2)}
+.lb-rank{display:flex;align-items:center;gap:10px;margin:0 2px 16px;flex-wrap:wrap}
+.lb-rank label{font-weight:800;color:#1F6B43;font-size:.9rem}
+.lb-rank select{flex:1;min-width:140px;padding:11px 12px;border-radius:14px;border:2px solid #1F6B43;background:#fff;color:#5A1212;font:700 .95rem var(--font-body);box-shadow:0 3px 0 #B3173A}
+.lb-card{position:relative;background:#fff;border:2px solid #1F6B43;border-radius:24px;padding:22px 16px 18px;margin-bottom:16px;text-align:center;box-shadow:0 5px 0 #B3173A}
+.lb-card.top1{border-color:#E0A800;background:linear-gradient(180deg,#FFFBEA,#FFFFFF 60%);box-shadow:0 5px 0 #E0A800,0 0 0 4px #FFE79A}
+.lb-card.top2{border-color:#8A94A6}
+.lb-card.top3{border-color:#B7713A}
+.lb-no{position:absolute;left:14px;top:-12px;background:#B3173A;color:#FFE79A;font:800 .95rem var(--font-body);padding:4px 12px;border-radius:999px;border:2px solid #fff;box-shadow:0 2px 0 #7A0F28}
+.lb-card.top1 .lb-no{background:#E0A800;color:#5A1212;box-shadow:0 2px 0 #9A7500}
+.lb-av{width:78px;height:78px;border-radius:50%;margin:2px auto 10px;background:#E8F5EC center/cover no-repeat;border:4px solid #FFE79A;box-shadow:0 0 0 2px #1F6B43,0 4px 10px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;font:700 1.6rem var(--font-body);color:#1F6B43}
+.lb-name{display:block;width:100%;padding:12px 14px;border-radius:14px;background:linear-gradient(180deg,#2E8B57,#1F6B43);border:2px solid #144A2D;box-shadow:0 3px 0 #0E3520;font:800 1rem var(--font-body);color:#FFF8E1;overflow-wrap:anywhere;text-shadow:0 1px 0 rgba(0,0,0,.25)}
+.lb-role{display:inline-block;margin-top:11px;padding:4px 14px;border-radius:999px;background:#FCE8E8;border:1.5px solid #B3173A;color:#8B1A1A;font:800 .8rem var(--font-body);letter-spacing:.3px;text-transform:uppercase}
+.lb-val{margin-top:12px;font:700 2.1rem var(--font-display);color:#B3173A;letter-spacing:-.2px;text-shadow:0 1px 0 #fff}
+.lb-sub{font-size:.85rem;color:#5B6B5F;margin-top:2px;font-weight:600}
+.lb-h{color:#1F6B43;font-family:var(--font-display);font-size:1.35rem;margin:20px 4px 10px}
+.lb-reqs{background:#fff;border:2px solid #1F6B43;border-radius:20px;padding:4px 14px;box-shadow:0 4px 0 #B3173A}
+.lb-req{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1.5px dashed #9DCBAE;color:#3B2A22;font-weight:600}
+.lb-req:last-child{border-bottom:0}
+.lb-req strong{color:#B3173A;white-space:nowrap}
+.lb-empty{background:#fff;border:2px dashed #1F6B43;border-radius:20px;padding:22px;text-align:center;color:#1F6B43;font-weight:700;margin-bottom:14px}
+.lb-note{font-size:.8rem;color:#5B6B5F;margin:14px 4px 0;text-align:center}
+
+.lb{overflow:hidden}
+.lb-lights{display:flex;justify-content:space-between;gap:4px;margin:0 0 8px;padding:0 6px;position:relative}
+.lb-lights::before{content:"";position:absolute;left:0;right:0;top:7px;height:3px;background:#1F6B43;border-radius:2px}
+.lb-lights i{position:relative;width:12px;height:16px;border-radius:50% 50% 45% 45%;box-shadow:0 0 8px currentColor;animation:lbTwinkle 1.6s ease-in-out infinite alternate;flex:0 0 auto}
+.lb-lights i:nth-child(odd){margin-top:6px}
+@keyframes lbTwinkle{from{opacity:.45;filter:brightness(.8)}to{opacity:1;filter:brightness(1.25)}}
+.lb-title{text-align:center;font-family:var(--font-display);font-size:1.6rem;font-weight:700;color:#FFE79A;text-shadow:0 2px 0 #8B1A1A,0 0 12px rgba(255,215,0,.5);margin:2px 0 12px;letter-spacing:.3px}
+.lb-snow{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.lb-snow span{position:absolute;top:-10%;color:#fff;font-size:14px;opacity:.85;text-shadow:0 0 4px rgba(31,107,67,.6);animation-name:lbFall;animation-timing-function:linear;animation-iteration-count:infinite}
+@keyframes lbFall{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(900%) rotate(360deg)}}
+.lb>*:not(.lb-snow){position:relative;z-index:1}
+.lb-tabs{box-shadow:inset 0 2px 4px rgba(0,0,0,.25),0 3px 0 #8B1A1A}
+.lb-card{overflow:visible}
+.lb-no{background:repeating-linear-gradient(135deg,#C8102E 0 8px,#FFFFFF 8px 16px);color:#fff;border:2px solid #FFD93D;text-shadow:0 1px 2px rgba(0,0,0,.5);box-shadow:0 3px 0 #7A0F28,0 0 0 2px #1F6B43}
+.lb-card.top1 .lb-no{background:repeating-linear-gradient(135deg,#FFD93D 0 8px,#FFF3B0 8px 16px);color:#8B1A1A;text-shadow:none;border-color:#C8102E}
+.lb-card.top2 .lb-no{background:repeating-linear-gradient(135deg,#B8C4D6 0 8px,#fff 8px 16px);color:#2B3440}
+.lb-card.top3 .lb-no{background:repeating-linear-gradient(135deg,#D9925A 0 8px,#fff 8px 16px);color:#4A2A10}
+.lb-crown{position:absolute;top:-30px;left:50%;transform:translateX(-50%);font-size:34px;filter:drop-shadow(0 3px 2px rgba(0,0,0,.3));animation:lbBob 2.4s ease-in-out infinite}
+@keyframes lbBob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-4px)}}
+.lb-card.top1{background:linear-gradient(180deg,#FFFBEA 0%,#FFFFFF 55%,#F3FFF6 100%)}
+.lb-av{box-shadow:0 0 0 3px #C8102E,0 0 0 6px #FFD93D,0 4px 10px rgba(0,0,0,.2)}
+.lb-name::before{content:"\2605 ";color:#FFD93D}
+.lb-name::after{content:" \2605";color:#FFD93D}
+.lb-val{color:#C8102E}
+.lb-h{color:#1F6B43}
+.lb-note{color:#1F6B43;font-weight:600}
+@media (prefers-reduced-motion: reduce){.lb-lights i,.lb-crown,.lb-snow span{animation:none}}
+
+.settings .set-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #E6EFE8}
+.settings .set-row:last-child{border-bottom:0}
+.about p{margin:0 0 12px;line-height:1.55}
+.about .line{padding:10px 0}
+.admin-entry{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.admin-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 6px}
+.admin-title{font-family:var(--font-display);color:#1F6B43;margin:6px 0 10px}
+.signout{margin-top:22px}
+.row-form .btn,.wrap .btn{white-space:nowrap}
+.assist{padding:0;overflow:hidden}
+.assist iframe{display:block;width:100%;height:480px;border:0;background:#FFF8EE}
+.assist-empty{display:flex;align-items:center;gap:14px}
+.assist-empty .empty-ico{width:56px;height:56px;flex:0 0 auto}
+
+/* ---- design polish: section headers, depth, feedback, focus ---- */
+h3{position:relative;display:flex;align-items:center;gap:8px;margin:22px 4px 10px}
+h3::before{content:"\2605";color:#E0A800;font-size:.9em;text-shadow:0 1px 0 #8B1A1A}
+h3::after{content:"";flex:1;height:2px;background:linear-gradient(90deg,#1F6B43,transparent);border-radius:2px;opacity:.5}
+.card{transition:transform .18s ease,box-shadow .18s ease}
+@media (hover:hover){.card:hover{transform:translateY(-2px)}}
+.btn{transition:transform .12s ease,box-shadow .12s ease,filter .12s ease}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.25)}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid #FFD93D;outline-offset:2px}
+.card .line{border-bottom:1px dashed #D7E7DC}
+.card .line:last-child{border-bottom:0}
+.item{border-bottom:1px solid #E6EFE8}
+.empty{color:#4B5B52}
+.notif .dot{box-shadow:0 0 0 3px rgba(200,16,46,.15)}
+.lb-card,.card.pic-card{will-change:auto}
+@media (prefers-reduced-motion: reduce){.card,.btn{transition:none}.card:hover{transform:none}}
+
+/* ---- Trade calculator (Christmas) ---- */
+.tr-result{border-radius:24px;border:2px solid #1F6B43;background:#fff;padding:16px;text-align:center;box-shadow:0 5px 0 #B3173A;margin:6px 0 12px}
+.tr-verdict{font:800 2.2rem var(--font-display);letter-spacing:2px}
+.tr-win .tr-verdict{color:#1F6B43}
+.tr-lose .tr-verdict{color:#C8102E}
+.tr-fair .tr-verdict{color:#B07A00}
+.tr-none .tr-verdict{color:#6B7B70;font-size:1.2rem}
+.tr-win{background:linear-gradient(180deg,#F3FFF6,#fff)}
+.tr-lose{background:linear-gradient(180deg,#FFF4F4,#fff)}
+.tr-fair{background:linear-gradient(180deg,#FFFBEA,#fff)}
+.tr-nums{display:flex;justify-content:space-around;gap:8px;flex-wrap:wrap;margin:6px 0;color:#3B2A22}
+.tr-note{color:#4B5B52;font-size:.9rem}
+.tr-warn{margin-top:8px;color:#8B1A1A;font-size:.85rem;font-weight:700}
+.tr-side{padding:12px}
+.tr-results{display:flex;flex-direction:column;gap:6px;margin:8px 0;max-height:260px;overflow:auto}
+.tr-hit{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px solid #1F6B43;background:#FFFBEA;border-radius:14px;padding:10px 12px;font:700 .92rem var(--font-body);color:#3B2A22;cursor:pointer;text-align:left}
+.tr-hit span:last-child{color:#C8102E;white-space:nowrap}.tr-hit img{width:38px;height:38px;object-fit:contain;border-radius:8px;background:#fff;border:1px solid #FFD93D;flex:0 0 38px}.tr-hit .tr-hit-name{flex:1;min-width:0;overflow-wrap:anywhere}.tr-row-pic{width:42px;height:42px;object-fit:contain;border-radius:10px;background:#fff;border:1px solid #FFD93D;flex:0 0 42px}
+.tr-hint{padding:6px 2px}
+.tr-list{margin-top:8px}
+.tr-row{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px dashed #D7E7DC}
+.tr-row-name{flex:1;min-width:0;font-weight:700;color:#3B2A22;overflow-wrap:anywhere}
+.tr-row-name .muted{font-size:.78rem;font-weight:500}
+.tr-qty{display:flex;align-items:center;gap:6px;font-weight:800}
+.tr-sub{text-align:right;margin-top:8px;color:#1F6B43}
+/* ---- Item values (Christmas) ---- */
+.val-tabs{display:flex;gap:6px;overflow-x:auto;padding:6px;margin:4px 0 12px;background:#1F6B43;border-radius:999px;scrollbar-width:none;box-shadow:inset 0 2px 4px rgba(0,0,0,.25)}
+.val-tabs::-webkit-scrollbar{display:none}
+.val-tab{flex:0 0 auto;border:0;background:transparent;color:#FFF3D6;font:700 .85rem var(--font-body);padding:8px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.val-tab span{font-weight:600;opacity:.8}
+.val-tab.on{background:linear-gradient(180deg,#FFE79A,#FFD04D);color:#8B1A1A;box-shadow:0 2px 0 #C9951B}
+.val-teaser{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.val-head h2{font-family:var(--font-display);color:#1F6B43;margin:6px 0 4px}
+.val-games{display:grid;grid-template-columns:1fr;gap:14px;margin:12px 0}
+.val-game{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:20px 18px;border-radius:24px;border:2px solid #1F6B43;background:#fff;color:#1F6B43;cursor:pointer;text-align:left;box-shadow:0 5px 0 #B3173A;font:inherit}
+.val-game strong{font:700 1.3rem var(--font-display);color:#8B1A1A}
+.val-game span:last-child{font-weight:800;color:#1F6B43;letter-spacing:1px}
+.val-game-ico{position:absolute;right:18px;top:14px;font-size:2rem}
+.val-game-adm{background:linear-gradient(135deg,#FFFBEA,#F3FFF6)}
+.val-game-mm2{background:linear-gradient(135deg,#FFF4F4,#FFFBEA)}
+.val-search{display:flex;align-items:center;gap:8px;background:#fff;border:2px solid #1F6B43;border-radius:999px;padding:4px 14px;margin:6px 0 12px;box-shadow:0 3px 0 #B3173A}
+.val-search input{border:0;box-shadow:none;padding:10px 4px;background:transparent}
+.val-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.val-card{background:#fff;border:2px solid #1F6B43;border-radius:20px;padding:10px;text-align:center;box-shadow:0 4px 0 #B3173A;display:flex;flex-direction:column;gap:4px}
+.val-card.noval{border-style:dashed}
+.val-card.editing{grid-column:1 / -1;box-shadow:0 0 0 3px #FFD93D,0 4px 0 #B3173A}
+.val-pic{height:96px;border-radius:14px;background:repeating-linear-gradient(135deg,#C8102E 0 10px,#fff 10px 20px) center/cover no-repeat;border:2px solid #FFD93D;display:flex;align-items:center;justify-content:center;color:#1F6B43;font:700 2rem var(--font-display)}
+.val-pic span{background:#fff;border-radius:50%;width:48px;height:48px;display:flex;align-items:center;justify-content:center}
+.val-name{font-weight:800;color:#3B2A22;font-size:.95rem;overflow-wrap:anywhere;margin-top:4px}
+.val-price{font:700 1.15rem var(--font-body);color:#C8102E}
+.val-card.noval .val-price{color:#8A8F98;font-weight:600;font-size:.9rem}
+.val-meta{font-size:.72rem;color:#6B7B70}
+.val-tools{margin-top:4px}
+.val-edit{margin-top:8px;text-align:left}
+@media (min-width:520px){.val-games{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<linearGradient id="sPink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB3C9"/><stop offset="1" stop-color="#E6395B"/></linearGradient>
+<linearGradient id="sHat" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF5C7C"/><stop offset="1" stop-color="#B3173A"/></linearGradient>
+<linearGradient id="sBow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFC2D6"/><stop offset="1" stop-color="#FF8FAB"/></linearGradient>
+<linearGradient id="sCherry" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF6B88"/><stop offset="1" stop-color="#B3173A"/></linearGradient>
+<linearGradient id="sGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF4B8"/><stop offset="1" stop-color="#E0A21F"/></linearGradient>
+<radialGradient id="sShadow"><stop offset="0" stop-color="#49323B" stop-opacity=".3"/><stop offset="1" stop-color="#49323B" stop-opacity="0"/></radialGradient>
+<symbol id="solara" viewBox="0 0 160 170">
+  <ellipse cx="80" cy="160" rx="54" ry="7" fill="url(#sShadow)"/>
+  <circle cx="80" cy="102" r="52" fill="url(#sPink)"/>
+  <ellipse cx="62" cy="80" rx="14" ry="8" fill="#fff" opacity=".35" transform="rotate(-20 62 80)"/>
+  <path d="M34 76Q44 22 96 16Q122 30 108 62Q84 84 34 76Z" fill="url(#sHat)"/>
+  <rect x="28" y="66" width="104" height="20" rx="10" fill="#fff"/>
+  <circle cx="110" cy="20" r="11" fill="#fff"/>
+  <ellipse cx="64" cy="106" rx="6.5" ry="9" fill="#49323B"/>
+  <ellipse cx="98" cy="106" rx="6.5" ry="9" fill="#49323B"/>
+  <circle cx="66" cy="102" r="2.5" fill="#fff"/><circle cx="100" cy="102" r="2.5" fill="#fff"/>
+  <path d="M71 122Q81 132 91 122" fill="none" stroke="#49323B" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="48" cy="120" r="7" fill="#FFD0DE" opacity=".9"/><circle cx="114" cy="120" r="7" fill="#FFD0DE" opacity=".9"/>
+  <path d="M124 92C136 78 150 84 146 96C143 104 132 102 124 92Z" fill="url(#sBow)" stroke="#E6395B" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M124 92C112 78 98 84 102 96C105 104 116 102 124 92Z" fill="url(#sBow)" stroke="#E6395B" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="124" cy="92" r="5" fill="#E6395B"/>
+</symbol>
+<symbol id="bow" viewBox="0 0 100 70">
+  <path d="M50 35C34 6 6 8 12 26C16 40 38 40 50 35Z" fill="url(#sBow)" stroke="#E6395B" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M50 35C66 6 94 8 88 26C84 40 62 40 50 35Z" fill="url(#sBow)" stroke="#E6395B" stroke-width="3" stroke-linejoin="round"/>
+  <rect x="44" y="28" width="12" height="16" rx="4" fill="#E6395B"/>
+  <path d="M42 44L30 66M58 44L70 66" stroke="#E6395B" stroke-width="5" stroke-linecap="round"/>
+</symbol>
+<symbol id="cherry" viewBox="0 0 80 100">
+  <path d="M40 4C40 20 44 30 54 34" fill="none" stroke="#7A4A2A" stroke-width="3" stroke-linecap="round"/>
+  <path d="M42 14C52 2 68 6 70 14C60 20 50 20 42 14Z" fill="#3A9D68"/>
+  <circle cx="26" cy="68" r="20" fill="url(#sCherry)"/>
+  <circle cx="54" cy="64" r="18" fill="url(#sCherry)"/>
+  <ellipse cx="20" cy="60" rx="5" ry="3" fill="#fff" opacity=".45" transform="rotate(-25 20 60)"/>
+  <ellipse cx="48" cy="56" rx="4.5" ry="2.5" fill="#fff" opacity=".45" transform="rotate(-25 48 56)"/>
+</symbol>
+<symbol id="sparkle" viewBox="0 0 40 40">
+  <path d="M20 0C21 14 26 19 40 20C26 21 21 26 20 40C19 26 14 21 0 20C14 19 19 14 20 0Z" fill="url(#sGold)"/>
+</symbol>
+<symbol id="heart" viewBox="0 0 60 56">
+  <path d="M30 52C12 40 2 30 2 17C2 8 9 2 17 2C23 2 28 5 30 10C32 5 37 2 43 2C51 2 58 8 58 17C58 30 48 40 30 52Z" fill="url(#sPink)"/>
+  <ellipse cx="18" cy="14" rx="5" ry="3" fill="#fff" opacity=".5" transform="rotate(-30 18 14)"/>
+</symbol>
+
+<linearGradient id="sWhite" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EFE7DA"/></linearGradient>
+<symbol id="mochi" viewBox="0 0 160 170">
+  <ellipse cx="80" cy="162" rx="50" ry="6" fill="url(#sShadow)"/>
+  <circle cx="80" cy="106" r="50" fill="url(#sWhite)" stroke="#E4D9C8" stroke-width="2"/>
+  <path d="M40 76Q52 34 82 30Q108 40 104 74Q72 86 40 76Z" fill="url(#sHat)"/>
+  <rect x="36" y="68" width="88" height="14" rx="7" fill="#fff" stroke="#E4D9C8" stroke-width="1.5"/>
+  <circle cx="110" cy="30" r="9" fill="#fff"/>
+  <path d="M58 106Q65 115 72 106" fill="none" stroke="#49323B" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M88 106Q95 115 102 106" fill="none" stroke="#49323B" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="50" cy="122" r="8" fill="#FFB3C9" opacity=".85"/><circle cx="110" cy="122" r="8" fill="#FFB3C9" opacity=".85"/>
+  <path d="M76 124Q80 129 84 124" fill="none" stroke="#49323B" stroke-width="2.5" stroke-linecap="round"/>
+</symbol>
+<symbol id="cherry-buddy" viewBox="0 0 120 130">
+  <path d="M60 14C60 30 64 40 76 46" fill="none" stroke="#7A4A2A" stroke-width="3" stroke-linecap="round"/>
+  <path d="M62 22C72 8 90 10 92 20C82 28 70 28 62 22Z" fill="#3A9D68"/>
+  <circle cx="42" cy="80" r="30" fill="url(#sCherry)"/>
+  <circle cx="84" cy="76" r="26" fill="url(#sCherry)"/>
+  <ellipse cx="30" cy="70" rx="7" ry="4" fill="#fff" opacity=".4" transform="rotate(-25 30 70)"/>
+  <circle cx="36" cy="80" r="3.5" fill="#49323B"/><circle cx="50" cy="80" r="3.5" fill="#49323B"/>
+  <path d="M38 90Q43 95 48 90" fill="none" stroke="#49323B" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="26" cy="90" r="4" fill="#FFB3C9" opacity=".85"/><circle cx="58" cy="90" r="4" fill="#FFB3C9" opacity=".85"/>
+  <path d="M30 104Q61 112 92 104L92 116Q61 124 30 116Z" fill="#fff" stroke="#E4D9C8" stroke-width="1.5"/>
+  <circle cx="44" cy="112" r="2.5" fill="#E6395B"/><circle cx="61" cy="116" r="2.5" fill="#E6395B"/><circle cx="78" cy="112" r="2.5" fill="#E6395B"/>
+</symbol>
+<symbol id="logo" viewBox="0 0 120 120">
+  <circle cx="60" cy="60" r="57" fill="#FFF6E7"/>
+  <circle cx="60" cy="60" r="52" fill="url(#sGold)"/>
+  <circle cx="60" cy="60" r="45" fill="url(#sCherry)"/>
+  <circle cx="60" cy="60" r="38" fill="none" stroke="#fff" stroke-width="1.6" stroke-dasharray="2 5" stroke-linecap="round" opacity=".7"/>
+  <path d="M60 30L67.5 47.5L86 49.5L72 61.8L76.2 80L60 70.4L43.8 80L48 61.8L34 49.5L52.5 47.5Z" fill="url(#sGold)" stroke="#8A5A00" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M60 72C52 62 40 66 44 74C46 79 55 77 60 72Z" fill="#FFF6E7" opacity=".95"/>
+  <path d="M60 72C68 62 80 66 76 74C74 79 65 77 60 72Z" fill="#FFF6E7" opacity=".95"/>
+  <circle cx="60" cy="72" r="3.4" fill="#8E0B21"/>
+  <circle cx="18" cy="18" r="3" fill="#FFF6E7"/><circle cx="102" cy="22" r="2.4" fill="#FFF6E7"/><circle cx="98" cy="100" r="2.8" fill="#FFF6E7"/>
+</symbol>
+
+<linearGradient id="gRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EE4A62"/><stop offset="1" stop-color="#A80E2A"/></linearGradient>
+<linearGradient id="gGreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3A9D68"/><stop offset="1" stop-color="#14502F"/></linearGradient>
+<linearGradient id="gGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF4B8"/><stop offset="1" stop-color="#E0A21F"/></linearGradient>
+<linearGradient id="gWhite" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E9E3DA"/></linearGradient>
+<radialGradient id="gShadow"><stop offset="0" stop-color="#2B1B17" stop-opacity=".35"/><stop offset="1" stop-color="#2B1B17" stop-opacity="0"/></radialGradient>
+<symbol id="tree" viewBox="0 0 120 150">
+  <ellipse cx="60" cy="144" rx="34" ry="5" fill="url(#gShadow)"/>
+  <rect x="51" y="118" width="18" height="24" rx="4" fill="#7A4A2A"/>
+  <path d="M60 14L86 56H34Z" fill="url(#gGreen)" stroke="#14502F" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M60 44L96 94H24Z" fill="url(#gGreen)" stroke="#14502F" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M60 74L108 124H12Z" fill="url(#gGreen)" stroke="#14502F" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M26 88Q34 96 42 88T58 88T74 88T90 88T100 88" fill="none" stroke="#FFE27A" stroke-width="3" stroke-dasharray="2 5" stroke-linecap="round"/>
+  <path d="M30 118Q40 126 50 118T70 118T90 118" fill="none" stroke="#FFE27A" stroke-width="3" stroke-dasharray="2 5" stroke-linecap="round"/>
+  <circle cx="46" cy="66" r="5" fill="#EE4A62"/><circle cx="46" cy="64" r="1.5" fill="#fff" opacity=".7"/>
+  <circle cx="76" cy="72" r="5" fill="url(#gGold)"/>
+  <circle cx="58" cy="104" r="5" fill="#EE4A62"/>
+  <circle cx="34" cy="108" r="4" fill="url(#gGold)"/><circle cx="88" cy="110" r="4" fill="#EE4A62"/>
+  <path d="M60 0l5 11 12 1-9 8 3 12-11-6-11 6 3-12-9-8 12-1z" fill="url(#gGold)" stroke="#B87A10" stroke-width="1.5" stroke-linejoin="round"/>
+</symbol><symbol id="gift-red" viewBox="0 0 120 120">
+  <ellipse cx="60" cy="110" rx="46" ry="7" fill="url(#gShadow)"/>
+  <rect x="20" y="50" width="80" height="58" rx="7" fill="url(#gRed)"/>
+  <rect x="14" y="36" width="92" height="22" rx="7" fill="#F55A71"/>
+  <rect x="18" y="38" width="84" height="5" rx="2.5" fill="#fff" opacity=".28"/>
+  <rect x="52" y="36" width="16" height="72" fill="url(#gGold)"/>
+  <path d="M60 36C44 10 22 14 28 28C32 38 50 38 60 36Z" fill="url(#gGold)"/>
+  <path d="M60 36C76 10 98 14 92 28C88 38 70 38 60 36Z" fill="url(#gGold)"/>
+  <circle cx="60" cy="35" r="7.5" fill="#FFE27A" stroke="#B87A10" stroke-width="2"/>
+  <rect x="26" y="58" width="7" height="42" rx="3.5" fill="#fff" opacity=".2"/>
+</symbol><symbol id="gift-gold" viewBox="0 0 120 120">
+  <ellipse cx="60" cy="110" rx="36" ry="6" fill="url(#gShadow)"/>
+  <rect x="26" y="66" width="68" height="42" rx="6" fill="url(#gGold)"/>
+  <rect x="22" y="58" width="76" height="14" rx="5" fill="#FFE27A"/>
+  <rect x="54" y="58" width="12" height="50" fill="url(#gRed)"/>
+  <circle cx="60" cy="54" r="10" fill="url(#gRed)"/>
+  <path d="M60 52C52 36 40 40 44 48Z" fill="url(#gRed)"/>
+  <path d="M60 52C68 36 80 40 76 48Z" fill="url(#gRed)"/>
+</symbol><symbol id="wreath" viewBox="0 0 120 120">
+  <circle cx="60" cy="60" r="40" fill="none" stroke="url(#gGreen)" stroke-width="16"/>
+  <circle cx="60" cy="60" r="40" fill="none" stroke="#FFE27A" stroke-width="2" stroke-dasharray="1 9" stroke-linecap="round"/>
+  <path d="M60 96L50 116M60 96L70 116" stroke="#A80E2A" stroke-width="5" stroke-linecap="round"/>
+  <path d="M60 92C44 100 36 108 40 116C50 112 58 104 60 96Z" fill="url(#gRed)"/>
+  <path d="M60 92C76 100 84 108 80 116C70 112 62 104 60 96Z" fill="url(#gRed)"/>
+</symbol><symbol id="bell" viewBox="0 0 120 120">
+  <path d="M60 18c-18 0-28 14-28 32v26l-10 12h76l-10-12V50c0-18-10-32-28-32z" fill="url(#gGold)" stroke="#B87A10" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M46 40Q50 30 60 30" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".6"/>
+  <circle cx="60" cy="96" r="7" fill="url(#gRed)"/>
+  <rect x="56" y="8" width="8" height="10" rx="3" fill="#B87A10"/>
+</symbol><symbol id="pip" viewBox="0 0 140 160">
+  <ellipse cx="70" cy="152" rx="46" ry="6" fill="url(#gShadow)"/>
+  <ellipse cx="26" cy="98" rx="10" ry="16" fill="#FFD9B8" transform="rotate(-18 26 98)"/>
+  <ellipse cx="114" cy="98" rx="10" ry="16" fill="#FFD9B8" transform="rotate(18 114 98)"/>
+  <circle cx="70" cy="100" r="38" fill="#FFD9B8"/>
+  <path d="M30 76Q34 34 96 36Q116 46 112 72Q72 66 30 76Z" fill="url(#gGreen)"/>
+  <rect x="26" y="70" width="90" height="14" rx="7" fill="url(#gRed)"/>
+  <circle cx="120" cy="30" r="10" fill="url(#gGold)" stroke="#B87A10" stroke-width="1.5"/>
+  <path d="M104 46Q120 40 118 26" fill="none" stroke="#14502F" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="58" cy="102" r="5" fill="#2B1B17"/><circle cx="82" cy="102" r="5" fill="#2B1B17"/>
+  <circle cx="59" cy="100" r="1.6" fill="#fff"/><circle cx="83" cy="100" r="1.6" fill="#fff"/>
+  <circle cx="50" cy="116" r="6" fill="#FF8FAB" opacity=".8"/><circle cx="90" cy="116" r="6" fill="#FF8FAB" opacity=".8"/>
+  <path d="M60 116Q70 126 80 116" fill="none" stroke="#2B1B17" stroke-width="3" stroke-linecap="round"/>
+  <path d="M40 136Q70 146 100 136L104 150Q70 158 36 150Z" fill="url(#gRed)"/>
+  <path d="M44 146Q70 154 96 146" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="4 6" stroke-linecap="round"/>
+</symbol><symbol id="snowy" viewBox="0 0 130 160">
+  <ellipse cx="65" cy="152" rx="44" ry="6" fill="url(#gShadow)"/>
+  <circle cx="65" cy="106" r="42" fill="url(#gWhite)" stroke="#D9D0C2" stroke-width="2"/>
+  <circle cx="65" cy="50" r="30" fill="url(#gWhite)" stroke="#D9D0C2" stroke-width="2"/>
+  <rect x="44" y="18" width="42" height="8" rx="2" fill="#2B1B17"/>
+  <rect x="50" y="2" width="30" height="20" rx="3" fill="#2B1B17"/>
+  <rect x="50" y="14" width="30" height="5" fill="url(#gRed)"/>
+  <circle cx="54" cy="50" r="4" fill="#2B1B17"/><circle cx="76" cy="50" r="4" fill="#2B1B17"/>
+  <path d="M65 56L80 60L65 63Z" fill="#F28C28"/>
+  <circle cx="54" cy="72" r="3" fill="#2B1B17"/><circle cx="65" cy="76" r="3" fill="#2B1B17"/><circle cx="76" cy="72" r="3" fill="#2B1B17"/>
+  <path d="M30 84Q65 98 100 84L102 96Q65 110 28 96Z" fill="url(#gRed)"/>
+  <path d="M96 94L110 116M34 94L18 112" stroke="#7A4A2A" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="65" cy="122" r="4" fill="#2B1B17"/><circle cx="65" cy="138" r="4" fill="#2B1B17"/>
+</symbol></defs></svg>
+<header class="top"><div class="brand"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><use href="#logo"/></svg><span class="wordmark">Solar <em>BNST</em></span></div><div id="whoami" class="muted"></div></header>
+<div class="lights" aria-hidden="true"></div>
+<div class="trees" aria-hidden="true"></div>
+<div class="candy" aria-hidden="true"></div>
+<div class="snow" aria-hidden="true"></div>
+<main id="app"></main>
+<input type="file" id="picFile" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+<input type="file" id="itemFile" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+<nav class="bottom" aria-label="Main navigation">
+  <button data-v="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+  <button data-v="board"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3"/></svg>Leaderboard</button>
+  <button data-v="find" class="plus"><span class="fab"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Find MM</button>
+  <button data-v="mms"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg>MMs</button>
+  <button data-v="market"><svg viewBox="0 0 24 24"><path d="M3 9l2-5h14l2 5M5 9v11h14V9M9 20v-6h6v6M3 9h18"/></svg>Market</button>
+  <button data-v="account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Account</button>
+</nav>
+<div id="toast" class="toast" role="status"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = (c,cur) => Number(c).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + " " + cur;
+const ST = {PENDING:"Pending Assignment",AWAIT:"Awaiting MM/MW Acceptance",ASSIGNED:"Assigned",GC:"Messenger GC Setup",PROG:"In Progress",CONF:"Awaiting Confirmation",DONE:"Completed",DISP:"Disputed",CANCEL:"Cancelled"};
+const T = {
+  [ST.PENDING]:[ST.AWAIT,ST.CANCEL], [ST.AWAIT]:[ST.ASSIGNED,ST.PENDING,ST.CANCEL],
+  [ST.ASSIGNED]:[ST.GC,ST.DISP,ST.CANCEL], [ST.GC]:[ST.PROG,ST.DISP,ST.CANCEL], [ST.PROG]:[ST.CONF,ST.DISP,ST.CANCEL],
+  [ST.CONF]:[ST.DONE,ST.PROG,ST.DISP], [ST.DISP]:[ST.PROG,ST.CANCEL], [ST.DONE]:[], [ST.CANCEL]:[]
+};
+const MM_OK = [ST.GC, ST.PROG, ST.CONF];
+const BLOCKED = [ST.ASSIGNED, ST.AWAIT];
+const pill = s => `<span class="pill ${({[ST.DONE]:"ok",[ST.DISP]:"err",[ST.CANCEL]:"err",[ST.PENDING]:"warn",[ST.AWAIT]:"warn"})[s]||""}">${esc(s)}</span>`;
+
+let me = null, setupRequired = false, view = "home", restricted = null, picTarget = null, picPending = null;
+const IMG_TYPES = ["image/jpeg","image/png","image/webp","image/gif"];
+const IMG_MAX = {avatar: 2*1024*1024, banner: 3*1024*1024};
+const SURVEY_OPTIONS = [["invited_staff","Invited or referred by an admin/staff member"],["invited_member","Invited by a member or friend"],["advertisement","Advertisement"],["facebook","Facebook group or page"],["tiktok","TikTok"],["other_social","Other social media"],["search","Search engine"],["other","Other"]];
+const SURVEY_LABELS = Object.fromEntries(SURVEY_OPTIONS);
+const RANK = {visitor:-1,staff:0,trial_mod:1,trial_admin:2,moderator:3,admin:4,head_mod:5,head_admin:6,co_owner:7,owner:8};
+const ovState = {metric:"completions", cur:"PHP"};
+const LB = {period:"monthly", metric:"fees", cur:"PHP"};
+const VAL = {game:null, q:"", editing:null, canEdit:false, sheet:null, sheets:[]};
+// Trade calculator: "give" is what you hand over, "get" is what you receive. Within 5% counts as fair.
+const TR = {game:null, all:[], sides:{give:[], get:[]}, q:{give:"", get:""}};
+const MARKET = {game:"", q:"", mine:false};
+const FAIR_BAND = 5;
+const GAME_NAME = {adm:"Adopt Me (ADM)", mm2:"Murder Mystery 2 (MM2)"};
+const peso = v => v == null ? "No value yet" : "\u20B1" + Number(v).toLocaleString(undefined, {maximumFractionDigits: 2});
+const itemPic = it => it.image_at ? `/api/items/${it.id}/image?v=${encodeURIComponent(it.image_at)}` : (it.image_url || null);
+const points = v => v == null ? "No value yet" : Number(v).toLocaleString(undefined, {maximumFractionDigits: 4}) + " pts";
+const ROLE_NAME = {"MEMBER":"Member","TRIAL MOD":"Trial Mod","TRIAL ADMIN":"Trial Admin","MOD":"Moderator","ADMIN":"Admin","HEAD MOD":"Head Mod","HEAD ADMIN":"Head Admin","CO-OWNER":"Co-Owner","OWNER":"Owner"};
+
+async function api(method, path, body) {
+  if (location.protocol === "file:") throw new Error("Open this app through the server: run node server.mjs, then go to http://localhost:8787");
+  let r;
+  try {
+    r = await fetch(path, {method, credentials:"same-origin",
+      headers: body ? {"Content-Type":"application/json"} : {},
+      body: body ? JSON.stringify(body) : undefined});
+  } catch {
+    throw new Error("Cannot reach the server. Make sure node server.mjs is running and open http://localhost:8787");
+  }
+  let data = {}; try { data = await r.json(); } catch {}
+  if (!r.ok) {
+    const err = new Error(data.error || "Something went wrong.");
+    err.data = data;
+    if (data.restricted) { restricted = data; me = null; }
+    throw err;
+  }
+  return data;
+}
+function toast(msg, ok) {
+  const t = $("#toast"); t.textContent = msg; t.className = "toast show" + (ok ? " ok" : "");
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.className = "toast", 3000);
+}
+async function render() {
+  document.querySelectorAll("nav.bottom button").forEach(b => b.classList.toggle("active", b.dataset.v === view));
+  $("#whoami").innerHTML = me ? `${esc(me.name)} ${badge(me)}` : "";
+  const gate = needsGate();
+  document.querySelector("nav.bottom").style.display = gate ? "none" : "";
+  const app = $("#app"); app.innerHTML = `<p class="muted">Loading...</p>`;
+  try { app.innerHTML = gate ? await gateView() : await VIEWS[view](); }
+  catch (e) { app.innerHTML = `<div class="card"><p class="err">${esc(e.message)}</p></div>`; }
+  if (gate && !me && !setupRequired) initGoogle();
+  window.scrollTo(0, 0);
+}
+function badge(u) {
+  const c = u.role_color || "#8A8F98";
+  return `<span class="badge" style="background:${c}22;color:${c};border:1px solid ${c}66"><i style="background:${c}"></i>${esc(u.role_label || "MEMBER")}</span>`;
+}
+function go(v) { view = v; render(); }
+document.querySelectorAll("[data-v]").forEach(b => b.onclick = () => go(b.dataset.v));
+
+// ---------- views ----------
+const VIEWS = {
+  home: async () => {
+    const o = await api("GET", "/api/overview");
+    const gc = await api("GET", "/api/gc-links");
+    const curs = o.by_currency.map(c => c.currency);
+    if (!curs.includes(ovState.cur) && curs.length) ovState.cur = curs[0];
+    const cur = ovState.cur;
+    const needsCur = ovState.metric !== "completions";
+    const pick = s => ovState.metric === "completions" ? s.completions
+                   : ovState.metric === "value" ? (s.value[cur] || 0) : (s.fees[cur] || 0);
+    const max = Math.max(1, ...o.series.map(pick));
+    const total30 = o.series.reduce((a, s) => a + s.completions, 0);
+    const valueLines = o.by_currency.length ? o.by_currency.map(c => `<div>${money(c.value, c.currency)}</div>`).join("") : "None yet";
+    const feeLines = !o.fee_percent ? "No fee set" : o.by_currency.length ? o.by_currency.map(c => `<div>${money(c.est_fee, c.currency)}</div>`).join("") : "None yet";
+    const fmt = v => ovState.metric === "completions" ? String(v) : money(v, cur);
+    const bars = o.series.map(s => {
+      const v = pick(s), h = v > 0 ? Math.max(4, Math.round(v / max * 100)) : 0;
+      return `<div class="col" title="${esc(s.day)}: ${esc(fmt(v))}"><div class="bar2" style="height:${h}%"></div></div>`;
+    }).join("");
+    return `
+    <div class="hero">
+      <div><div class="hero-k">Merry Christmas</div><h1>Holiday Overview</h1><p>Completed deals and estimated fees, verified records only.</p></div>
+      <div class="scene" aria-hidden="true"><svg class="s-main"><use href="#tree"/></svg><svg class="s-pip"><use href="#pip"/></svg><svg class="s-g1"><use href="#gift-red"/></svg><svg class="s-g2"><use href="#gift-gold"/></svg></div>
+    </div>
+    <div class="tiles">
+      <div class="tile"><div class="k"><svg class="ti"><use href="#tree"/></svg>Completed this month</div><div class="v">${o.month_completed}</div><div class="s">Verified completions (UTC month)</div></div>
+      <div class="tile"><div class="k"><svg class="ti"><use href="#gift-gold"/></svg>Deal value</div><div class="v" style="font-size:1rem">${valueLines}</div><div class="s">Kept per currency</div></div>
+      <div class="tile"><div class="k"><svg class="ti"><use href="#bell"/></svg>Estimated fees</div><div class="v" style="font-size:1rem">${feeLines}</div><div class="s">${o.fee_percent ? o.fee_percent + "% of completed value" : "Platform fee not set"}</div></div>
+      <div class="tile"><div class="k"><svg class="ti"><use href="#wreath"/></svg>Last 30 days</div><div class="v">${total30}</div><div class="s">Completions</div></div>
+    </div>
+    <h3>Activity</h3>
+    <div class="card">
+      <div class="ctl">
+        <select id="metricSel" aria-label="Metric">
+          <option value="completions" ${ovState.metric === "completions" ? "selected" : ""}>Completions</option>
+          <option value="value" ${ovState.metric === "value" ? "selected" : ""}>Deal value</option>
+          <option value="fees" ${ovState.metric === "fees" ? "selected" : ""}>Estimated fees</option>
+        </select>
+        ${needsCur && curs.length ? `<select id="curSel" aria-label="Currency">${curs.map(c => `<option ${c === cur ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>` : ""}
+      </div>
+      ${total30 || o.by_currency.length ? `<div class="chart">${bars}</div>
+        <div class="axis"><span>${esc(o.series[0].day.slice(5))}</span><span>${esc(o.series[29].day.slice(5))}</span></div>`
+        : `<div class="empty">No completed transactions yet.</div>`}
+    </div>
+    <h3>Solar Market</h3><div class="card"><strong>Trade with the community</strong><p class="muted">Browse Adopt Me and MM2 listings, post your own asking price, and mark items sold.</p><button class="btn block" data-click="openMarket">Open Market</button></div>
+    <h3>Item values</h3>
+    <div class="card val-teaser"><div><strong>Look up item values</strong><div class="muted">Pick Adopt Me or Murder Mystery 2, then search any item.</div></div><div class="wrap"><button class="btn sm" data-click="openValues">Open values</button><button class="btn sm ghost" data-click="openTrade">Trade calculator</button></div></div>
+    ${gcSection(gc)}
+    <h3>Look up a transaction</h3>
+    <div class="card"><form id="trackForm" class="stack"><label>Transaction ID<input name="tid" placeholder="STB-XXXXX-XXXXX" autocomplete="off" required></label>
+      <button class="btn block">Look up</button></form></div><div id="trackOut"></div>
+    <p class="muted" style="padding:0 6px">Figures are aggregated from completed transactions only. No names or links are shown.</p>`;
+  },
+
+  find: async () => `${await clientPickers()}<div class="card"><h2>New request</h2>
+    <p class="muted">Enter the transaction details. The next available MM/MW will be assigned.</p>
+    <div class="notice">Never share Facebook passwords or login codes here.</div>
+    <form id="reqForm" class="stack">
+      <label>Buyer display name<input name="buyer_name" maxlength="60" required></label>
+      <label>Buyer Facebook profile URL<input name="buyer_fb" type="url" placeholder="https://facebook.com/username" required></label>
+      <label>Seller display name<input name="seller_name" maxlength="60" required></label>
+      <label>Seller Facebook profile URL<input name="seller_fb" type="url" placeholder="https://facebook.com/username" required></label>
+      <label>Item or service<input name="item" maxlength="120" required></label>
+      <div class="two"><label>Agreed price<input name="price" inputmode="decimal" placeholder="0.00" required></label>
+        <label>Currency<select name="currency"><option>PHP</option><option>USD</option><option>EUR</option></select></label></div>
+      <label>Transaction description<textarea name="description" maxlength="1000" required></textarea></label>
+      <label>Additional instructions (optional)<textarea name="extra" maxlength="1000"></textarea></label>
+      <label class="check"><input type="checkbox" name="agree" required><span>Both parties agree to these details and the MM/MW process. The platform records progress and does not guarantee refunds or outcomes.</span></label>
+      <button class="btn block">Submit request</button>
+    </form></div><div id="reqOut"></div>`,
+
+  mms: async () => {
+    const list = await api("GET", "/api/mms");
+    return `<h3>MM/MW directory</h3>` + (list.length ? list.map(m => `<div class="card">
+      <div class="row"><strong>${esc(m.name)}</strong><span class="pill">${m.holding} holding · ${m.completed} completed</span></div>
+      ${m.specialties ? `<p class="muted">${esc(m.specialties)}</p>` : ""}${m.bio ? `<p>${esc(m.bio)}</p>` : ""}</div>`).join("")
+      : `<div class="card empty">No MM/MW has published a profile yet.</div>`);
+  },
+
+  market: async () => {
+    if (!me) return `<div class="card"><p>Log in to use the market.</p></div>`;
+    const qs = new URLSearchParams();
+    if (MARKET.game) qs.set("game",MARKET.game);
+    if (MARKET.q) qs.set("q",MARKET.q);
+    const rows = await api("GET", "/api/market?"+qs.toString());
+    const mine = await api("GET", "/api/market?status=mine");
+    const listings = rows.length ? rows.map(x=>`<div class="item"><div style="flex:1;min-width:0"><strong>${esc(x.item_name)}</strong> <span class="pill">${x.game.toUpperCase()}</span><div class="muted">Seller: ${esc(x.seller_name)} · ${new Date(x.created_at).toLocaleDateString()}</div>${x.notes?`<p>${esc(x.notes)}</p>`:""}<div class="tx big">${peso(x.asking_price)}</div>${x.contact?`<p><a href="${esc(x.contact)}" target="_blank" rel="noopener noreferrer">Contact seller</a></p>`:"<p class='muted'>Seller has not added a contact link.</p>"}</div>${x.seller_id===me.id?`<div class="wrap"><button class="btn sm ghost" data-click="markListing" data-id="${x.id}" data-status="sold">Mark sold</button><button class="btn sm ghost" data-click="removeListing" data-id="${x.id}">Remove</button></div>`:""}</div>`).join("") : `<div class="empty">No active listings found. Be the first to post one!</div>`;
+    return `<div class="hero"><div><div class="hero-k">Solar BNST</div><h1>Community Market</h1><p>Browse game items and post your asking price.</p></div><div style="font-size:3rem" aria-hidden="true">🛍️</div></div>
+      <div class="card"><h2>Find listings</h2><label>Search item<input id="marketSearch" type="search" placeholder="Search pets, knives, items..." value="${esc(MARKET.q)}"></label>
+      <label>Game<select id="marketGame"><option value="" ${!MARKET.game?"selected":""}>All games</option><option value="adm" ${MARKET.game==="adm"?"selected":""}>Adopt Me</option><option value="mm2" ${MARKET.game==="mm2"?"selected":""}>Murder Mystery 2</option></select></label>
+      <button class="btn block" data-click="marketSearchApply">Search market</button></div>
+      <h3>Active listings</h3><div class="card">${listings}</div>
+      <h3>Post an item</h3><div class="card"><form id="marketForm" class="stack">
+      <label>Game<select name="game"><option value="adm">Adopt Me (ADM)</option><option value="mm2">Murder Mystery 2 (MM2)</option></select></label>
+      <label>Item name<input name="item_name" maxlength="80" placeholder="e.g. Neon Dragon" required></label>
+      <label>Asking price (PHP)<input name="asking_price" type="number" min="0" max="1000000000" step="0.01" placeholder="0" required></label>
+      <label>Notes (optional)<textarea name="notes" maxlength="500" placeholder="Condition, age, potions, details..."></textarea></label>
+      <label>Facebook/Messenger contact link (optional)<input name="contact" type="url" placeholder="https://m.me/..."></label>
+      <p class="muted">Be careful when trading. Solar BNST does not hold payments or guarantee a deal. Never share passwords or login codes.</p>
+      <button class="btn block">Publish listing</button></form></div>
+      <h3>Your active listings (${mine.length})</h3><div class="card">${mine.length?mine.map(x=>`<div class="line"><span>${esc(x.item_name)} · ${esc(x.game.toUpperCase())}</span><strong>${peso(x.asking_price)}</strong></div>`).join(""):"<div class='empty'>You have no active listings.</div>"}</div>`;
+  },
+
+  values: async () => {
+    if (!me) return `<div class="card"><p>Log in to continue.</p></div>`;
+    if (!VAL.game) return `<div class="val-head"><h2>Item values</h2><p class="muted">Choose a game to start.</p></div>
+      <div class="val-games">
+        <button class="val-game val-game-adm" data-click="pickGame" data-g="adm"><span class="val-game-ico" aria-hidden="true">&#127776;</span><strong>Adopt Me</strong><span>ADM</span></button>
+        <button class="val-game val-game-mm2" data-click="pickGame" data-g="mm2"><span class="val-game-ico" aria-hidden="true">&#128297;</span><strong>Murder Mystery 2</strong><span>MM2</span></button>
+      </div>
+    `;
+    const d = await api("GET", `/api/items?game=${VAL.game}&q=${encodeURIComponent(VAL.q)}&sheet=${encodeURIComponent(VAL.sheet || "")}`);
+    VAL.canEdit = d.can_edit; VAL.sheets = d.sheets; VAL.sheet = d.sheet || VAL.sheet || d.sheets[0].name;
+    const sheetOpts = d.sheets.map(x => `<option value="${esc(x.name)}" ${x.name === VAL.sheet ? "selected" : ""}>${esc(x.name)}</option>`).join("");
+    const addForm = VAL.canEdit ? `<h3>Add an item</h3><div class="card"><form id="itemAddForm" class="stack">
+        <label>Item name<input name="name" maxlength="80" required></label>
+        <label>Value<input name="value" inputmode="decimal" placeholder="community value points"></label>
+        <label>Picture URL (HTTPS, optional)<input name="image_url" type="url" placeholder="https://.../item.png"></label>
+        <label>Sheet<select name="sheet">${sheetOpts}</select></label>
+        <button class="btn block">Add item</button></form></div>
+      <h3>Import a list</h3><div class="card"><form id="importForm" class="stack">
+        <p class="muted">One item per line: name, then community value points. Example: <code>Shadow Dragon,100</code>. Existing names get their value and sheet updated. This is not PHP.</p>
+        <label>Sheet for these items<select name="sheet">${sheetOpts}</select></label>
+        <label>List<textarea name="text" rows="6" placeholder="Shadow Dragon,1500"></textarea></label>
+        <button class="btn block">Import list</button></form></div>` : "";
+    const tabs = `<div class="val-tabs" role="tablist">${d.sheets.map(x => `<button class="val-tab ${x.name === VAL.sheet && !VAL.q ? "on" : ""}" role="tab" data-click="pickSheet" data-s="${esc(x.name)}">${esc(x.name)} <span>${x.count}</span></button>`).join("")}</div>`;
+    return `<div class="admin-top"><button class="btn sm ghost" data-click="backToGames">&larr; Games</button><button class="btn sm ghost" data-click="openTrade">Trade calculator</button>${VAL.game === "mm2" ? `<a class="btn sm ghost" href="https://fairstash.app/mm2" target="_blank" rel="noopener noreferrer">Full MM2 values ↗</a>` : `<a class="btn sm ghost" href="https://adoptme.trading/values" target="_blank" rel="noopener noreferrer">Full Adopt Me values ↗</a>`}${VAL.canEdit ? `<button class="btn sm" data-click="syncCatalog" data-game="${VAL.game}">Sync catalogue & pictures</button>` : ""}</div>
+      <h2 class="admin-title">Item values</h2>
+      <p class="muted">Community trading values are points, not PHP. Values use community trading points and are refreshed from category pages when the server can reach the sources. Picture coverage depends on the source image data; items without a source image are clearly marked.</p>
+      <label class="val-search"><span aria-hidden="true">&#128269;</span><input id="valSearch" type="search" placeholder="Search all sheets" value="${esc(VAL.q)}" aria-label="Search items"></label>
+      ${VAL.q ? `<p class="muted">Showing matches from all sheets.</p>` : tabs}
+      <div id="valGrid" class="val-grid">${valueCards(d.items)}</div>
+      ${addForm}`;
+  },
+
+  trade: async () => {
+    if (!me) return `<div class="card"><p>Log in to continue.</p></div>`;
+    if (!TR.game) return `<div class="val-head"><h2>Trade calculator</h2><p class="muted">Choose a game to start. Win, Fair, or Lose is worked out from the values in this app.</p></div>
+      <div class="val-games">
+        <button class="val-game val-game-adm" data-click="trPickGame" data-g="adm"><span class="val-game-ico" aria-hidden="true">&#127776;</span><strong>Adopt Me</strong><span>ADM</span></button>
+        <button class="val-game val-game-mm2" data-click="trPickGame" data-g="mm2"><span class="val-game-ico" aria-hidden="true">&#128297;</span><strong>Murder Mystery 2</strong><span>MM2</span></button>
+      </div>`;
+    if (!TR.all.length) { const d = await api("GET", `/api/items?game=${TR.game}&all=1`); TR.all = d.items; }
+    const t = tradeTotals(), v = verdict(t.give, t.get);
+    const bad = [...TR.sides.give, ...TR.sides.get].filter(r => r.item.value == null).length;
+    return `<div class="admin-top"><button class="btn sm ghost" data-click="trBack">&larr; Home</button><button class="btn sm ghost" data-click="trReset">Clear</button></div>
+      <h2 class="admin-title">Trade calculator</h2>
+      <div class="tr-result tr-${v.key}"><div class="tr-verdict">${esc(v.label)}</div>
+        <div class="tr-nums"><span>You give <strong>${esc(points(t.give))}</strong></span><span>You get <strong>${esc(points(t.get))}</strong></span></div>
+        <div class="tr-note">${esc(v.note)}</div>
+        ${bad ? `<div class="tr-warn">${bad} item(s) have no value yet and are not counted.</div>` : ""}</div>
+      ${tradeSide("give", "You give")}
+      ${tradeSide("get", "You get")}
+      <p class="lb-note">W/F/L uses the exact same game catalogue values shown in Item Values. Items without a numeric value are not counted. Community values can change, so verify unusual trades.</p>`;
+  },
+
+  board: async () => {
+    const qs = new URLSearchParams({period: LB.period, metric: LB.metric, currency: LB.cur});
+    const [lb, req] = await Promise.all([api("GET", "/api/leaderboard?" + qs), api("GET", "/api/top-requesters")]);
+    const money2 = (v, c) => c === "PHP" ? "\u20B1" + Number(v).toLocaleString(undefined, {maximumFractionDigits: 2}) : Number(v).toLocaleString(undefined, {maximumFractionDigits: 2}) + " " + c;
+    const tab = (p, label) => `<button class="lb-tab ${LB.period === p ? "on" : ""}" data-click="lbPeriod" data-p="${p}">${label}</button>`;
+    const metricOpts = `<option value="fees" ${LB.metric === "fees" ? "selected" : ""}>Fees earned (est.)</option><option value="completed" ${LB.metric === "completed" ? "selected" : ""}>Completed deals</option>`;
+    const curOpts = lb.currencies.map(c => `<option ${c === lb.currency ? "selected" : ""}>${esc(c)}</option>`).join("");
+    const cards = lb.rows.length ? lb.rows.map(r => {
+      const av = r.avatar_at ? `background-image:url('/api/users/${r.id}/avatar?v=${encodeURIComponent(r.avatar_at)}')` : "";
+      const value = lb.metric === "fees" ? money2(r.fee_value, lb.currency) : String(r.completed);
+      const sub = lb.metric === "fees" ? "Fees earned (est.)" : "Completed deals";
+      return `<div class="lb-card ${r.rank === 1 ? "top1" : r.rank === 2 ? "top2" : r.rank === 3 ? "top3" : ""}">
+        ${r.rank === 1 ? `<div class="lb-crown" aria-hidden="true">&#128081;</div>` : ""}
+        <div class="lb-no">#${r.rank}</div>
+        <div class="lb-av" style="${av}">${av ? "" : esc(String(r.name).charAt(0).toUpperCase())}</div>
+        <div class="lb-name">${esc(r.name)}</div>
+        <span class="lb-role">${esc(ROLE_NAME[r.role_label] || r.role_label)}</span>
+        <div class="lb-val">${esc(value)}</div>
+        <div class="lb-sub">${esc(sub)}</div>
+      </div>`;
+    }).join("") : `<div class="lb-empty">No completed deals in this period yet.</div>`;
+    const reqBlock = req.length ? req.map((r, i) => `<div class="lb-req"><span>${i + 1}. ${esc(r.name)}</span><strong>${r.count} ${r.count === 1 ? "request" : "requests"}</strong></div>`).join("")
+      : `<div class="lb-empty">No requests yet.</div>`;
+    const bulbs = ["#FF4D4D","#FFD93D","#6BCB77","#4D96FF","#FF6BB5","#FFD93D","#6BCB77","#FF4D4D","#FFD93D","#FF4D4D","#4D96FF","#6BCB77","#FFD93D","#FF6BB5","#FF4D4D","#6BCB77"].map((c, i) => `<i style="background:${c};animation-delay:${((i * 0.18) % 1.6).toFixed(2)}s"></i>`).join("");
+    const flakes = Array.from({length: 14}, (_, i) => `<span style="left:${(i * 7.3) % 100}%;animation-delay:${(i * 0.7) % 6}s;animation-duration:${6 + (i % 5)}s">&#10052;</span>`).join("");
+    return `<div class="lb">
+      <div class="lb-snow" aria-hidden="true">${flakes}</div>
+      <div class="lb-lights" aria-hidden="true">${bulbs}</div>
+      <div class="lb-title">&#127876; Top MMs &#127876;</div>
+      <div class="lb-tabs">${tab("daily", "Daily")}${tab("weekly", "Weekly")}${tab("monthly", "Monthly")}</div>
+      <div class="lb-rank"><label>Rank by</label><select id="lbMetric" aria-label="Rank by">${metricOpts}</select>
+        ${LB.metric === "fees" && lb.currencies.length > 1 ? `<select id="lbCur" aria-label="Currency">${curOpts}</select>` : ""}</div>
+      ${cards}
+      <h3 class="lb-h">Most requests</h3><div class="lb-reqs">${reqBlock}</div>
+      <p class="lb-note">Fee estimates use the platform fee of ${lb.fee_percent}% on completed deals. Periods use Philippine time.</p>
+    </div>`;
+  },
+
+  account: async () => {
+    if (!me) {
+      if (setupRequired) return `<div class="card"><h2>First-time setup</h2>
+        <p class="muted">Enter the one-time code shown in the server console.</p>
+        <form id="setupForm" class="stack">
+          <label>Setup code<input name="code" required autocomplete="off"></label>
+          <label>Username<input name="username" required autocomplete="off"></label>
+          <label>Your name<input name="name" maxlength="60" required></label>
+          <label>Password (12+ characters)<input name="password" type="password" minlength="12" required autocomplete="new-password"></label>
+          <button class="btn block">Create owner account</button></form></div>`;
+      return `<div class="card"><svg class="hero-ico small" aria-hidden="true"><use href="#solara"/></svg><h2>Staff log in</h2>
+        <form id="loginForm" class="stack">
+          <label>Username<input name="username" required autocomplete="username"></label>
+          <label>Password<input name="password" type="password" required autocomplete="current-password"></label>
+          <button class="btn block">Log in</button></form></div>
+        <p class="muted">Staff accounts are created by an administrator.</p>`;
+    }
+    const parts = [profileSection(), settingsSection(), aboutSection(), await assistantSection()];
+    parts.push(await alertsSection());
+    if (me.mm_eligible) parts.push(await holdsSection());
+    const r = Object.prototype.hasOwnProperty.call(RANK, me.role) ? RANK[me.role] : -1;
+    if (r >= 1) parts.push(await clientsSection());
+    if (r >= 3) parts.push(await queueSection());
+    if (canAdmin()) parts.push(`<h3>Admin</h3><div class="card admin-entry"><div><strong>Admin panel</strong><div class="muted">Staff, moderation, revenue, audit, GC links, and survey responses.</div></div><button class="btn" data-click="openAdmin">Open admin panel</button></div>`);
+    parts.push(`<div class="signout"><button class="btn ghost block" data-click="logout">Log out</button></div>`);
+    return parts.join("");
+  },
+
+  admin: async () => {
+    if (!me) return `<div class="card empty"><p>Log in to continue.</p></div>`;
+    if (!canAdmin()) return `<div class="card empty"><h2>Admin panel</h2><p class="muted">Only the Owner and Co-Owner can open the admin panel.</p><div class="wrap" style="justify-content:center"><button class="btn sm ghost" data-click="backToAccount">Back to account</button></div></div>`;
+    const parts = [`<div class="admin-top"><button class="btn sm ghost" data-click="backToAccount">&larr; Account</button><span class="muted">Signed in as ${esc(me.name)}</span></div>`, `<h2 class="admin-title">Admin panel</h2>`];
+    parts.push(await revenueSection(), await staffSection(), await auditSection(), await surveySection());
+    parts.push(await gcAdminSection(), await assistantAdminSection());
+    return parts.join("");
+  }
+};
+
+const profileSection = () => `${pictureEditor(me, true)}<h3>Edit profile</h3><div class="card"><form id="profileForm" class="stack">
+  <label>Name<input name="name" maxlength="60" value="${esc(me.name)}" required></label>
+  <label>Bio<textarea name="bio" maxlength="500">${esc(me.bio)}</textarea></label>
+  <label>Specialties<input name="specialties" maxlength="200" value="${esc(me.specialties)}"></label>
+  <label class="check"><input type="checkbox" name="show_public" ${me.show_public ? "checked" : ""}><span>Show my profile in the public MM/MW directory</span></label>
+  <button class="btn">Save profile</button></form></div>`;
+
+const picUrl = (u, kind) => { const at = kind === "avatar" ? u.avatar_at : u.banner_at; return at ? `/api/users/${u.id}/${kind}?v=${encodeURIComponent(at)}` : null; };
+function pictureEditor(u, self) {
+  const pend = picPending && picPending.userId === u.id ? picPending : null;
+  const avatarSrc = pend && pend.kind === "avatar" ? pend.dataUrl : picUrl(u, "avatar");
+  const bannerSrc = pend && pend.kind === "banner" ? pend.dataUrl : picUrl(u, "banner");
+  const initials = esc(String(u.name || u.username || "?").trim().charAt(0).toUpperCase());
+  const choose = (kind, label) => `<button class="btn sm ghost" data-click="pickPic" data-kind="${kind}" data-user="${u.id}">${label}</button>`;
+  const remove = (kind, label) => `<button class="btn sm ghost" data-click="delPic" data-kind="${kind}" data-user="${u.id}" ${u[kind + "_at"] ? "" : "disabled"}>${label}</button>`;
+  const pendBar = pend ? `<div class="pic-pending"><span>Preview. This ${esc(pend.kind)} is not saved yet.</span>
+    <span class="wrap"><button class="btn sm" data-click="savePic">Save ${esc(pend.kind)}</button><button class="btn sm ghost" data-click="cancelPic">Cancel</button></span></div>` : "";
+  return `<div class="card pic-card">
+    <div class="pic-banner" ${bannerSrc ? `style="background-image:url('${esc(bannerSrc)}')"` : ""}></div>
+    <div class="pic-row">
+      <div class="pic-avatar" ${avatarSrc ? `style="background-image:url('${esc(avatarSrc)}')"` : ""}>${avatarSrc ? "" : initials}</div>
+      <div class="pic-id"><strong>${esc(u.name)}</strong> ${badge(u)}<div class="muted">@${esc(u.username)}</div></div>
+    </div>
+    ${u.bio ? `<p class="pic-bio">${esc(u.bio)}</p>` : ""}
+    ${pendBar}
+    <div class="pic-actions">${choose("avatar", "Change picture")}${choose("banner", "Change banner")}${remove("avatar", "Remove picture")}${remove("banner", "Remove banner")}</div>
+    <p class="pic-hint">${self ? "Your" : esc(u.name) + "'s"} picture: up to 2 MB. Banner: up to 3 MB. JPG, PNG, WEBP or GIF.</p>
+  </div>
+`;
+}
+
+
+async function alertsSection() {
+  const n = await api("GET", "/api/notifications");
+  return `<h3>Alerts${n.unread ? ` (${n.unread} new)` : ""}</h3><div class="card">` +
+    (n.items.length ? n.items.map(i => `<div class="notif ${i.read ? "read" : ""}"><span class="dot"></span><div><div>${esc(i.text)}</div><div class="muted">${new Date(i.at).toLocaleString()}</div></div></div>`).join("")
+    : `<div class="empty"><svg class="empty-ico" aria-hidden="true"><use href="#snowy"/></svg><div>No notifications yet.</div></div>`) +
+    (n.unread ? `<div class="wrap"><button class="btn ghost sm" data-click="readAll">Mark all read</button></div>` : "") + `</div>`;
+}
+
+function transitionButtons(t, admin) {
+  return (T[t.status] || []).filter(n => admin ? !BLOCKED.includes(n) : MM_OK.includes(n))
+    .map(n => `<button class="btn sm ghost" data-click="move" data-id="${esc(t.id)}" data-to="${esc(n)}">${esc(n)}</button>`).join("");
+}
+
+async function holdsSection() {
+  const list = (await api("GET", "/api/transactions")).filter(t => ![ST.DONE, ST.CANCEL].includes(t.status));
+  return `<h3>My holds</h3>` + (list.length ? list.map(t => `<div class="card">
+    <div class="row"><span class="tx">${esc(t.id)}</span>${pill(t.status)}</div>
+    <p class="muted">${esc(t.item)} · ${money(t.price, t.currency)}</p>
+    <div class="wrap">${t.status === ST.AWAIT
+      ? `<button class="btn sm" data-click="respond" data-id="${esc(t.id)}" data-accept="1">Accept</button><button class="btn sm ghost" data-click="respond" data-id="${esc(t.id)}" data-accept="0">Decline</button>`
+      : transitionButtons(t, false)}</div></div>`).join("") : `<div class="card empty"><svg class="empty-ico" aria-hidden="true"><use href="#pip"/></svg><div>No active holds right now.</div></div>`);
+}
+
+async function revenueSection() {
+  const r = await api("GET", "/api/revenue");
+  return `<h3>Revenue</h3><div class="card">` +
+    (r.by_currency.length ? r.by_currency.map(c => `<div class="line"><span>${esc(c.currency)} · ${c.count} completed</span><strong>${money(c.value, c.currency)}</strong></div>` +
+      (r.fee_percent ? `<div class="line"><span>${esc(c.currency)} est. fee (${r.fee_percent}%)</span><strong>${money(c.est_fee, c.currency)}</strong></div>` : "")).join("")
+    : `<div class="empty">No completed transactions yet.</div>`) +
+    `<p class="muted">Amounts are kept per currency. ${r.fee_percent ? "" : "No platform fee is set."}</p>` +
+    (me.role === "owner" ? `<form id="feeForm" class="row-form"><input name="fee_percent" inputmode="decimal" value="${r.fee_percent}" aria-label="Platform fee percent"><button class="btn sm">Save fee %</button></form>` : "") +
+    `</div>`;
+}
+
+async function queueSection() {
+  const [list, mms] = await Promise.all([api("GET", "/api/transactions"), api("GET", "/api/eligible-mms")]);
+  const nameOf = id => (mms.find(s => s.id === id) || {}).name || "none";
+  return `<h3>Queue</h3>` + (list.length ? list.map(t => `<div class="card">
+    <div class="row"><span class="tx">${esc(t.id)}</span>${pill(t.status)}</div>
+    <p class="muted">${esc(t.item)} · ${money(t.price, t.currency)} · MM/MW: ${esc(nameOf(t.mm_id))}${t.open_dispute ? " · open dispute" : ""}</p>
+    ${[ST.PENDING, ST.AWAIT].includes(t.status) ? (mms.length
+      ? `<div class="row-form"><select id="mm-${esc(t.id)}">${mms.map(m => `<option value="${m.id}">${esc(m.name)}</option>`).join("")}</select>
+         <button class="btn sm" data-click="assign" data-id="${esc(t.id)}">Assign</button></div>`
+      : `<p class="muted">No active MM/MW is eligible yet.</p>`) : ""}
+    <div class="wrap">${transitionButtons(t, true)}</div></div>`).join("") : `<div class="card empty">No transactions yet.</div>`);
+}
+
+const canRoles = () => !!me && (me.role === "owner" || me.role === "co_owner");
+const canAdmin = () => !!me && (me.role === "owner" || me.role === "co_owner");
+function tradeTotals() {
+  const sum = side => side.reduce((a, r) => a + (r.item.value == null ? 0 : r.item.value * r.qty), 0);
+  return {give: sum(TR.sides.give), get: sum(TR.sides.get)};
+}
+function verdict(give, get) {
+  if (give === 0 && get === 0) return {key: "none", label: "ADD ITEMS", note: "Pick items on both sides to see the result."};
+  if (give === 0) return {key: "win", label: "WIN", note: "You get value and give nothing."};
+  const pct = (get - give) / give * 100;
+  if (pct > FAIR_BAND) return {key: "win", label: "WIN", note: `You get ${pct.toFixed(1)}% more value than you give.`};
+  if (pct < -FAIR_BAND) return {key: "lose", label: "LOSE", note: `You get ${Math.abs(pct).toFixed(1)}% less value than you give.`};
+  return {key: "fair", label: "FAIR", note: `Within ${FAIR_BAND}% of each other.`};
+}
+function tradeResults(side) {
+  const q = TR.q[side].trim().toLowerCase();
+  if (!q) return `<div class="muted tr-hint">Type an item name to search.</div>`;
+  const hits = TR.all.filter(it => it.name.toLowerCase().includes(q)).slice(0, 15);
+  if (!hits.length) return `<div class="muted tr-hint">No items match.</div>`;
+  return hits.map(it => { const pic = itemPic(it); return `<button class="tr-hit" data-click="trAdd" data-side="${side}" data-id="${it.id}">${pic ? `<img src="${esc(pic)}" alt="" loading="lazy">` : `<span class="tr-hit-placeholder">🎁</span>`}<span class="tr-hit-name">${esc(it.name)}</span><span>${esc(it.value == null ? "no value" : points(it.value))}</span></button>`; }).join("");
+}
+function tradeSide(side, label) {
+  const rows = TR.sides[side];
+  const total = rows.reduce((a, r) => a + (r.item.value == null ? 0 : r.item.value * r.qty), 0);
+  const list = rows.map(r => { const pic = itemPic(r.item); return `<div class="tr-row">${pic ? `<img class="tr-row-pic" src="${esc(pic)}" alt="" loading="lazy">` : `<span class="tr-row-pic" style="display:grid;place-items:center">🎁</span>`}<div class="tr-row-name">${esc(r.item.name)}<div class="muted">${esc(r.item.value == null ? "no value" : points(r.item.value) + " each")}</div></div>
+      <div class="tr-qty"><button class="btn sm ghost" data-click="trQty" data-side="${side}" data-id="${r.item.id}" data-d="-1" aria-label="Less">&minus;</button><span>${r.qty}</span><button class="btn sm ghost" data-click="trQty" data-side="${side}" data-id="${r.item.id}" data-d="1" aria-label="More">+</button></div>
+      <button class="btn sm ghost" data-click="trRemove" data-side="${side}" data-id="${r.item.id}" aria-label="Remove">&times;</button></div>`; }).join("");
+  return `<h3>${esc(label)}</h3><div class="card tr-side">
+    <label class="val-search"><span aria-hidden="true">&#128269;</span><input id="trq-${side}" type="search" placeholder="Search an item" value="${esc(TR.q[side])}" aria-label="Search ${esc(label)}"></label>
+    <div id="trResults-${side}" class="tr-results">${tradeResults(side)}</div>
+    <div class="tr-list">${list || `<div class="muted">No items yet.</div>`}</div>
+    <div class="tr-sub">Subtotal <strong>${esc(points(total))}</strong></div></div>`;
+}
+function valueCards(items) {
+  if (!items.length) return `<div class="lb-empty">No items found.</div>`;
+  return items.map(it => {
+    const pic = itemPic(it);
+    const editing = VAL.editing === it.id && VAL.canEdit;
+    const updated = it.updated_at ? new Date(it.updated_at).toLocaleDateString() : "";
+    return `<div class="val-card ${it.value == null ? "noval" : ""} ${editing ? "editing" : ""}">
+      <div class="val-pic" ${pic ? `style="background-image:url('${esc(pic)}')"` : ""}>${pic ? "" : `<span>${esc(String(it.name).charAt(0).toUpperCase())}</span>`}</div>
+      <div class="val-name">${esc(it.name)}</div>
+      <div class="val-price">${esc(points(it.value))}</div>
+      <div class="val-meta">${updated ? "Updated " + esc(updated) : ""}</div>
+      ${VAL.canEdit ? `<div class="val-tools"><button class="btn sm ghost" data-click="editItem" data-id="${it.id}">${editing ? "Editing" : "Edit"}</button></div>` : ""}
+      ${editing ? `<form id="itemEditForm" data-id="${it.id}" class="stack val-edit">
+        <label>Item name<input name="name" maxlength="80" value="${esc(it.name)}" required></label>
+        <label>Value<input name="value" inputmode="decimal" value="${it.value == null ? "" : esc(it.value)}"></label>
+        <label>Picture URL (HTTPS)<input name="image_url" type="url" value="${esc(it.image_url || "")}" placeholder="https://.../item.png"></label>
+        <label>Sheet<select name="sheet">${(VAL.sheets || []).map(x => `<option value="${esc(x.name)}" ${x.name === it.sheet ? "selected" : ""}>${esc(x.name)}</option>`).join("")}</select></label>
+        <div class="wrap"><button class="btn sm">Save</button><button type="button" class="btn sm ghost" data-click="cancelEditItem">Cancel</button></div>
+        <div class="wrap"><button type="button" class="btn sm ghost" data-click="pickItemPic" data-id="${it.id}">${pic ? "Change picture" : "Add picture"}</button>
+        <button type="button" class="btn sm ghost" data-click="deleteItem" data-id="${it.id}">Delete</button></div>
+      </form>` : ""}
+    </div>`;
+  }).join("");
+}
+async function refreshValueGrid() {
+  const grid = document.getElementById("valGrid"); if (!grid || !VAL.game) return;
+  const d = await api("GET", `/api/items?game=${VAL.game}&q=${encodeURIComponent(VAL.q)}&sheet=${encodeURIComponent(VAL.sheet || "")}`);
+  VAL.canEdit = d.can_edit;
+  grid.innerHTML = valueCards(d.items);
+}
+const APP_VERSION = "1.2.0";
+async function assistantSection() {
+  const a = await api("GET", "/api/assistant").catch(() => ({url: null}));
+  if (!a.url) return `<h3>Chat assistant</h3><div class="card assist-empty"><svg class="empty-ico" aria-hidden="true"><use href="#snowy"/></svg><div><strong>Coming soon</strong><div class="muted">The chat assistant is not set up yet. The Owner or Co-Owner can add its link in the admin panel.</div></div></div>`;
+  return `<h3>Chat assistant</h3><div class="card assist"><iframe src="${esc(a.url)}" title="Chat assistant" sandbox="allow-scripts allow-forms allow-popups allow-same-origin" referrerpolicy="no-referrer" loading="lazy"></iframe></div>`;
+}
+async function assistantAdminSection() {
+  const a = await api("GET", "/api/assistant").catch(() => ({url: null}));
+  return `<h3>Chat assistant link</h3><div class="card"><p class="muted">Shown on the Account page inside a frame. Use a full https:// link to your assistant.</p>
+    <form id="assistantForm" class="stack">
+      <label>Assistant URL<input name="url" type="url" maxlength="300" value="${esc(a.url || "")}" placeholder="https://..."></label>
+      <div class="wrap"><button class="btn sm">Save link</button><button type="button" class="btn sm ghost" data-click="clearAssistant">Clear link</button></div>
+    </form></div>`;
+}
+function settingsSection() {
+  return `<h3>Settings</h3><div class="card settings">
+    <div class="set-row"><div><strong>Username</strong><div class="muted">@${esc(me.username)}</div></div></div>
+    <div class="set-row"><div><strong>Role</strong><div class="muted">${badge(me)}</div></div></div>
+    <div class="set-row"><div><strong>Public MM/MW directory</strong><div class="muted">${me.show_public ? "Your profile is listed for buyers and sellers." : "Your profile is hidden from the public directory."} Change this in Edit profile.</div></div></div>
+  </div>`;
+}
+function aboutSection() {
+  return `<h3>About</h3><div class="card about">
+    <p><strong>Solar BNST</strong> connects buyers and sellers with a trusted middleman (MM/MW) so each deal is handled step by step, with a clear record of every status change.</p>
+    <div class="line"><span>Version</span><strong>${APP_VERSION}</strong></div>
+    <div class="line"><span>Need help?</span><span class="muted">Message an administrator</span></div>
+  </div>`;
+}
+const outranks = s => !!me && s.id !== me.id && s.role !== "owner" && (me.role === "owner" || (RANK[s.role] ?? -1) < (RANK[me.role] ?? -1));
+const suspendedNow = s => !!s.suspended_until && Date.parse(s.suspended_until) > Date.now();
+function statusLine(s) {
+  if (s.banned) return `<div class="err">Banned${s.ban_reason ? ": " + esc(s.ban_reason) : ""}</div>`;
+  if (suspendedNow(s)) return `<div class="warn">Suspended until ${esc(new Date(s.suspended_until).toLocaleString())}${s.suspend_reason ? " · " + esc(s.suspend_reason) : ""}</div>`;
+  return "";
+}
+function modControls(s) {
+  if (!outranks(s)) return "";
+  const ban = s.banned
+    ? `<button class="btn sm ghost" data-click="unban" data-id="${s.id}">Unban</button>`
+    : `<div class="row-form"><input id="banr-${s.id}" maxlength="300" placeholder="Reason for ban" aria-label="Ban reason"><button class="btn sm" data-click="ban" data-id="${s.id}">Ban</button></div>`;
+  const sus = suspendedNow(s)
+    ? `<button class="btn sm ghost" data-click="unsuspend" data-id="${s.id}">Lift suspension</button>`
+    : `<div class="row-form"><input id="susr-${s.id}" maxlength="300" placeholder="Reason for suspension" aria-label="Suspension reason"><input id="susu-${s.id}" type="datetime-local" aria-label="Suspend until"><button class="btn sm ghost" data-click="suspend" data-id="${s.id}">Suspend</button></div>`;
+  return `<div class="stack" style="width:100%">${ban}${sus}</div>`;
+}
+
+async function staffSection() {
+  const staff = await api("GET", "/api/staff");
+  const roles = canRoles() ? await api("GET", "/api/roles") : [];
+  const hier = await api("GET", "/api/role-hierarchy");
+  const hierarchy = `<h3>Role hierarchy</h3><div class="card"><ol class="hier">${hier.map((h, i) => `<li><span>${i+1}. ${esc(h.label)}</span><span class="badge" style="background:${h.color}22;color:${h.color};border:1px solid ${h.color}66"><i style="background:${h.color}"></i>${esc(h.label)}</span></li>`).join("")}</ol></div>`;
+  const picCard = picTarget ? (() => { const t = staff.find(x => x.id === picTarget); return t ? `${pictureEditor(t, false)}<div class="wrap" style="margin-bottom:14px"><button class="btn sm ghost" data-click="closePics">Close pictures</button></div>` : ""; })() : "";
+  const rows = staff.map(s => `<div class="item">
+    <div><strong>${esc(s.name)}</strong> <span class="muted">@${esc(s.username)}</span> ${badge(s)}
+    <div class="muted">${s.active ? "Active" : "Deactivated"}${s.mm_eligible ? " · MM/MW eligible" : ""}${s.can_edit_values ? " · Value editor" : ""}</div>${statusLine(s)}</div>
+    ${!canRoles() || (s.role === "owner" && me.role !== "owner") ? "" : `<div class="row-form" style="width:100%"><select id="role-${s.id}" aria-label="Role">${roles.map(r => `<option value="${esc(r.value)}" ${r.value === s.role ? "selected" : ""}>${esc(r.label)}</option>`).join("")}</select><button class="btn sm ghost" data-click="setRole" data-id="${s.id}">Set role</button></div>`}
+    <div class="wrap">
+      ${outranks(s) ? `<button class="btn sm ghost" data-click="toggle" data-id="${s.id}" data-field="mm_eligible" data-cur="${s.mm_eligible ? 1 : 0}">${s.mm_eligible ? "Revoke MM" : "Make MM"}</button>
+      <button class="btn sm ghost" data-click="toggle" data-id="${s.id}" data-field="active" data-cur="${s.active ? 1 : 0}">${s.active ? "Deactivate" : "Activate"}</button>` : ""}
+      <button class="btn sm ghost" data-click="editPics" data-id="${s.id}">Pictures</button>
+      ${canRoles() && outranks(s) ? `<button class="btn sm ghost" data-click="toggleValueEditor" data-id="${s.id}" data-cur="${s.can_edit_values ? 1 : 0}">${s.can_edit_values ? "Remove value editor" : "Make value editor"}</button>` : ""}
+    </div>
+    ${modControls(s)}</div>`).join("");
+  const roleOpts = canRoles() ? roles.map(r => `<option value="${esc(r.value)}">${esc(r.label)}</option>`).join("") : `<option value="visitor">MEMBER</option>`;
+  return `${hierarchy}${picCard}<h3>Staff</h3><div class="card">${rows}</div>
+    <h3>Add staff</h3><div class="card"><form id="staffForm" class="stack">
+      <label>Username<input name="username" required autocomplete="off"></label>
+      <label>Name<input name="name" maxlength="60" required></label>
+      <label>Temporary password (12+ characters)<input name="password" type="password" minlength="12" required autocomplete="new-password"></label>
+      <label>Role<select name="role">${roleOpts}</select></label>
+      <label class="check"><input type="checkbox" name="mm_eligible"><span>MM/MW eligible</span></label>
+      <button class="btn block">Create account</button></form></div>`;
+}
+
+async function gcAdminSection() {
+  const inv = await api("GET", "/api/gc-invite");
+  const slots = await api("GET", "/api/gc-links");
+  const slotRows = slots.map(g => `<label>${esc(gcName(g.slot))} link<input name="gc${g.slot}" type="url" maxlength="300" value="${esc(g.url || "")}" placeholder="https://m.me/j/..."></label>`).join("");
+  return `<h3>GC links (Mix GC1, MM2 GC2, ADM GC3)</h3><div class="card"><p class="muted">Shown as the Join GC buttons on Home. Leave a field empty to clear it. Must be an https Facebook or Messenger link.</p>
+    <form id="gcSlotsForm" class="stack">${slotRows}<div class="wrap"><button class="btn sm">Save GC links</button></div></form></div>
+`;
+}
+
+async function surveySection() {
+  const rows = await api("GET", "/api/survey-responses");
+  return `<h3>Discovery survey (private)</h3><div class="card">` + (rows.length ? rows.map(r => `<div class="item"><div>
+      <strong>${esc(r.name)}</strong> <span class="muted">@${esc(r.username)}</span>
+      <div class="muted">${esc(SURVEY_LABELS[r.source] || r.source)}${r.inviter ? " · invited by @" + esc(r.inviter) : ""}</div>
+      ${r.feedback ? `<p>${esc(r.feedback)}</p>` : ""}<div class="muted">${new Date(r.submitted_at).toLocaleString()}</div></div></div>`).join("")
+    : `<div class="empty">No survey responses yet.</div>`) + `<p class="muted">Only the Owner and Co-Owner can see these answers.</p></div>`;
+}
+
+async function auditSection() {
+  const rows = await api("GET", "/api/audit");
+  return `<h3>Audit log</h3><div class="card">` + (rows.length ? rows.slice(0, 50).map(a => `<div class="line"><span>${esc(a.actor || "system")} · ${esc(a.action)}${a.target ? " · " + esc(a.target) : ""}</span><span class="muted">${new Date(a.at).toLocaleString()}</span></div>`).join("") : `<div class="empty">No activity yet.</div>`) + `</div>`;
+}
+
+
+const GC_LABELS = {1: "Mix GC1", 2: "MM2 GC2", 3: "ADM GC3"};
+const gcName = slot => GC_LABELS[slot] || `GC ${slot}`;
+function gcSection(gc) {
+  return `<h3>Join this GC</h3><div class="card"><div class="stack">${gc.map(g => g.url
+    ? `<a class="btn" href="${esc(g.url)}" target="_blank" rel="noopener noreferrer">${esc(gcName(g.slot))}</a>`
+    : `<button class="btn ghost" disabled>${esc(gcName(g.slot))}: link not set yet</button>`).join("")}</div>
+    <p class="muted" style="margin-top:10px">Wala ka pa sa alinman sa mga GC na ito? Pwede kang sumali. Pindutin lang ang GC na gusto mong salihan, at didiretso ka sa group chat.</p></div>`;
+}
+
+async function clientPickers() {
+  if (!me || (Object.prototype.hasOwnProperty.call(RANK, me.role) ? RANK[me.role] : -1) < 1) return "";
+  const list = await api("GET", "/api/clients");
+  window.CLIENTS = Object.fromEntries(list.map(c => [c.id, c]));
+  const opts = list.map(c => `<option value="${c.id}">${esc(c.name)}${c.display_name ? " (" + esc(c.display_name) + ")" : ""}</option>`).join("");
+  return `<div class="card"><h2>Saved clients</h2><p class="muted">Pick a saved client to fill in the name and Facebook link.</p>
+    <div class="two"><label>Buyer<select data-pick="buyer"><option value="">Choose...</option>${opts}</select></label>
+    <label>Seller<select data-pick="seller"><option value="">Choose...</option>${opts}</select></label></div></div>`;
+}
+
+async function clientsSection() {
+  const list = await api("GET", "/api/clients");
+  return `<h3>Clients</h3><div class="card">` + (list.length ? list.map(c => `<div class="item">
+      <div><strong>${esc(c.name)}</strong>${c.display_name ? ` <span class="muted">(${esc(c.display_name)})</span>` : ""}<div class="muted"><a href="${esc(c.fb_url)}" target="_blank" rel="noopener noreferrer">Facebook page</a></div></div>
+      <div class="wrap"><button class="btn sm ghost" data-click="delClient" data-id="${c.id}">Delete</button></div></div>`).join("")
+    : `<div class="empty">No saved clients yet.</div>`) + `</div>
+    <h3>Add client</h3><div class="card"><form id="clientForm" class="stack">
+      <label>Client name<input name="cname" maxlength="60" required></label>
+      <label>Display name (how they are called)<input name="display" maxlength="60"></label>
+      <label>Facebook page or profile link<input name="fb" type="url" placeholder="https://facebook.com/pagename" required></label>
+      <button class="btn block">Save client</button></form></div>`;
+}
+
+
+// ---------- sign-in gate: shown before the app ----------
+function needsGate() {
+  return !!restricted || setupRequired || !me || (me.role === "visitor" && !me.onboarded);
+}
+function restrictedCard() {
+  const r = restricted;
+  const title = r.kind === "suspended" ? "Your account is suspended" : r.kind === "banned" ? "Your account is banned" : "Your account is inactive";
+  const until = r.kind === "suspended" && r.until ? `<p>Access returns on <strong>${esc(new Date(r.until).toLocaleString())}</strong>.</p>` : "";
+  return `<div class="card empty restricted-card"><svg class="hero-ico small" aria-hidden="true"><use href="#solara"/></svg><h2>${esc(title)}</h2>
+    <p>${esc(r.error)}</p>${until}
+    <p class="muted">If you think this is a mistake, contact an administrator.</p>
+    <div class="wrap"><button class="btn sm" data-click="recheck">Check again</button><button class="btn sm ghost" data-click="switchAccount">Log in with another account</button></div></div>`;
+}
+async function gateView() {
+  if (restricted) return restrictedCard();
+  if (setupRequired) return `<div class="card"><h2>First-time setup</h2>
+    <p class="muted">Enter the one-time code shown in the server console.</p>
+    <form id="setupForm" class="stack">
+      <label>Setup code<input name="code" required autocomplete="off"></label>
+      <label>Username<input name="username" required autocomplete="off"></label>
+      <label>Your name<input name="name" maxlength="60" required></label>
+      <label>Password (12+ characters)<input name="password" type="password" minlength="12" required autocomplete="new-password"></label>
+      <button class="btn block">Create owner account</button></form></div>`;
+  if (me && me.role === "visitor") return `<div class="card"><h2>A few quick questions</h2>
+    <p class="muted">This helps us serve you better. It takes a few seconds.</p>
+    <form id="onboardForm" class="stack">
+      <h3>How did you discover Solar BNST?</h3>
+      ${SURVEY_OPTIONS.map(([v, l]) => `<label class="check"><input type="radio" name="source" value="${v}" required><span>${esc(l)}</span></label>`).join("")}
+      <label>Inviter's username (optional)<input name="inviter" maxlength="24" autocomplete="off" placeholder="e.g. juan_admin"></label>
+      <label>Feedback (optional)<textarea name="feedback" maxlength="500"></textarea></label>
+      <h3>Why are you here?</h3>
+      <label class="check"><input type="radio" name="purpose" value="buying" required><span>I am buying something</span></label>
+      <label class="check"><input type="radio" name="purpose" value="selling"><span>I am selling something</span></label>
+      <label class="check"><input type="radio" name="purpose" value="middleman"><span>I need a middleman (MM/MW)</span></label>
+      <label class="check"><input type="radio" name="purpose" value="looking"><span>Just looking around</span></label>
+      <label class="check"><input type="radio" name="purpose" value="other"><span>Something else</span></label>
+      <label>Who sent you this link? (optional)<input name="referrer" maxlength="120" placeholder="A friend, a page, a post..."></label>
+      <label class="check"><input type="checkbox" name="join_stream"><span>Yes, I want to join the stream and group chat</span></label>
+      <button class="btn block">Continue</button></form></div>`;
+  return `<div class="card"><h2>Welcome to Solar BNST</h2>
+    <p class="muted">Sign in or create a free account to continue.</p>
+    <div id="gBtn" class="wrap" style="justify-content:center"></div>
+    <h3>Create an account</h3>
+    <form id="signupForm" class="stack">
+      <label>Your name<input name="name" maxlength="60" required autocomplete="name"></label>
+      <label>Username<input name="username" maxlength="24" required autocomplete="username"></label>
+      <label>Password (8+ characters)<input name="password" type="password" minlength="8" required autocomplete="new-password"></label>
+      <button class="btn block">Create account</button></form>
+    <details class="login-toggle">
+      <summary class="btn ghost block">Already have an account? Log in</summary>
+      <form id="loginForm" class="stack" style="margin-top:14px">
+        <label>Username<input name="username" required autocomplete="username"></label>
+        <label>Password<input name="password" type="password" required autocomplete="current-password"></label>
+        <button class="btn block">Log in</button>
+      </form>
+    </details></div>`;
+}
+let googleScriptPromise = null;
+async function initGoogle() {
+  const box = document.getElementById("gBtn");
+  if (!box) return;
+  let cfg = {};
+  try { cfg = await api("GET", "/api/config"); } catch {}
+  if (!cfg.google_client_id) {
+    box.innerHTML = `<p class="muted" style="text-align:center">Google sign-in is not set up yet. Use an account below.</p>`;
+    return;
+  }
+  try {
+    if (!window.google?.accounts?.id) {
+      if (!googleScriptPromise) {
+        googleScriptPromise = new Promise((resolve, reject) => {
+          const existing = document.querySelector('script[data-google-identity="1"]');
+          if (existing) {
+            existing.addEventListener("load", resolve, {once:true});
+            existing.addEventListener("error", reject, {once:true});
+            if (window.google?.accounts?.id) resolve();
+            return;
+          }
+          const s = document.createElement("script");
+          s.src = "https://accounts.google.com/gsi/client";
+          s.async = true;
+          s.dataset.googleIdentity = "1";
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+      await googleScriptPromise;
+    }
+    if (!window.google?.accounts?.id) throw new Error("Google sign-in could not load. Please use username and password.");
+    window.google.accounts.id.initialize({client_id: cfg.google_client_id, callback: async resp => {
+      try {
+        if (!resp?.credential) throw new Error("Google did not return a sign-in credential.");
+        const r = await api("POST", "/api/auth/google", {credential: resp.credential});
+        me = r.user;
+        await render();
+      } catch (e) { toast(e.message, false); }
+    }});
+    box.replaceChildren();
+    window.google.accounts.id.renderButton(box, {theme:"outline", size:"large", width:280, text:"continue_with"});
+  } catch {
+    box.innerHTML = `<p class="muted" style="text-align:center">Google sign-in could not load. Use an account below.</p>`;
+  }
+}
+
+// ---------- form submissions ----------
+const FORMS = {
+  async trackForm(f) {
+    const out = $("#trackOut"); out.innerHTML = `<p class="muted">Loading...</p>`;
+    const t = await api("GET", `/api/track/${encodeURIComponent(f.tid.value.trim().toUpperCase())}`);
+    out.innerHTML = `<div class="card"><div class="row"><span class="tx">${esc(t.id)}</span>${pill(t.status)}</div>
+      <ol class="tl">${t.timeline.map(h => `<li>${esc(h.status)}<small>${new Date(h.at).toLocaleString()}</small></li>`).join("")}</ol></div>`;
+  },
+  async reqForm(f) {
+    const d = Object.fromEntries(new FormData(f)); d.agree = f.agree.checked;
+    const r = await api("POST", "/api/transactions", d);
+    f.reset();
+    $("#reqOut").innerHTML = `<div class="card empty"><h2>Request received</h2><p>Your transaction ID</p>
+      <p class="tx big">${esc(r.id)}</p><p class="muted">Save this ID to track progress.</p></div>`;
+  },
+  async signupForm(f) {
+    const r = await api("POST", "/api/visitors", {name:f.name.value, username:f.username.value, password:f.password.value});
+    me = r.user; toast("Account created", true); render();
+  },
+  async onboardForm(f) {
+    const source = (f.querySelector("input[name=source]:checked") || {}).value;
+    if (!source) throw new Error("Please choose how you discovered Solar BNST.");
+    await api("POST", "/api/survey", {source, inviter: f.inviter.value.trim(), feedback: f.feedback.value.trim()});
+    const purpose = (f.querySelector("input[name=purpose]:checked") || {}).value;
+    const r = await api("PATCH", "/api/onboarding", {purpose, referrer:f.referrer.value, join_stream:f.join_stream.checked});
+    me = r; toast("Welcome!", true); render();
+  },
+  async loginForm(f) {
+    const r = await api("POST", "/api/login", {username:f.username.value, password:f.password.value});
+    restricted = null; me = r.user; toast("Logged in", true); render();
+  },
+  async setupForm(f) {
+    await api("POST", "/api/setup", {code:f.code.value, username:f.username.value, name:f.name.value, password:f.password.value});
+    setupRequired = false; toast("Owner created. Log in now.", true); render();
+  },
+  async profileForm(f) {
+    me = await api("PATCH", "/api/me", {name:f.name.value, bio:f.bio.value, specialties:f.specialties.value, show_public:f.show_public.checked});
+    toast("Profile saved", true); render();
+  },
+  async feeForm(f) {
+    await api("PATCH", "/api/settings", {fee_percent: Number(f.fee_percent.value)});
+    toast("Fee saved", true); render();
+  },
+  async clientForm(f) {
+    await api("POST", "/api/clients", {name:f.cname.value, display_name:f.display.value, fb_url:f.fb.value});
+    f.reset(); toast("Client saved", true); render();
+  },
+  async assistantForm(f) {
+    const url = f.url.value.trim();
+    if (url && !/^https:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/[^\s"'<>]*)?$/i.test(url)) throw new Error("Use a full https:// link.");
+    await api("PATCH", "/api/assistant", {url});
+    toast("Assistant link saved", true); render();
+  },
+  async marketForm(f) {
+    await api("POST","/api/market",{game:f.game.value,item_name:f.item_name.value.trim(),asking_price:f.asking_price.value,notes:f.notes.value,contact:f.contact.value.trim()});
+    toast("Listing published",true); f.reset(); render();
+  },
+  async itemAddForm(f) {
+    await api("POST", "/api/items", {game: VAL.game, name: f.name.value.trim(), value: f.value.value.trim(), image_url: f.image_url.value.trim(), sheet: f.sheet.value});
+    VAL.sheet = f.sheet.value;
+    toast("Item added", true); render();
+  },
+  async itemEditForm(f) {
+    await api("PATCH", `/api/items/${f.dataset.id}`, {name: f.name.value.trim(), value: f.value.value.trim(), image_url: f.image_url.value.trim(), sheet: f.sheet.value});
+    VAL.editing = null; toast("Item saved", true); render();
+  },
+  async importForm(f) {
+    const r = await api("POST", "/api/items/import", {game: VAL.game, sheet: f.sheet.value, text: f.text.value});
+    VAL.sheet = f.sheet.value;
+    const skipped = r.skipped_lines.length ? ` ${r.skipped_lines.length} line(s) skipped.` : "";
+    toast(`Added ${r.added}, updated ${r.updated}.${skipped}`, true); render();
+  },
+  async gcSlotsForm(f) {
+    for (const slot of [1, 2, 3]) {
+      const url = f["gc" + slot].value.trim();
+      if (url && !/^https:\/\/(www\.|m\.)?(facebook\.com|messenger\.com|m\.me)\/[^\s"'<>]{1,300}$/i.test(url)) throw new Error(`${gcName(slot)}: use an https Facebook or Messenger link.`);
+      await api("PATCH", "/api/gc-links", {slot, url});
+    }
+    toast("GC links saved", true); render();
+  },
+  async staffForm(f) {
+    await api("POST", "/api/staff", {username:f.username.value, name:f.name.value, password:f.password.value, role:f.role.value, mm_eligible:f.mm_eligible.checked});
+    toast("Account created", true); render();
+  }
+};
+document.addEventListener("submit", async e => {
+  e.preventDefault();
+  const fn = FORMS[e.target.id]; if (!fn) return;
+  try { await fn(e.target); }
+  catch (err) { toast(err.message, false); if (restricted) await render(); }
+});
+
+// ---------- button actions ----------
+const CLICK = {
+  async logout() { await api("POST", "/api/logout"); me = null; restricted = null; picTarget = null; picPending = null; return "Logged out"; },
+  async recheck() {
+    restricted = null;
+    try { me = await api("GET", "/api/me"); } catch { me = null; }
+    return "";
+  },
+  async switchAccount() { await api("POST", "/api/logout").catch(() => {}); me = null; restricted = null; return ""; },
+  lbPeriod(el) { LB.period = el.dataset.p; return ""; },
+  openMarket() { view="market"; MARKET.game=""; MARKET.q=""; return ""; },
+  marketSearchApply() { MARKET.q=$("#marketSearch").value.trim(); MARKET.game=$("#marketGame").value; return ""; },
+  async markListing(el) { await api("PATCH",`/api/market/${el.dataset.id}`,{status:el.dataset.status}); return "Listing marked sold"; },
+  async removeListing(el) { if(!confirm("Remove this listing?")) return null; await api("DELETE",`/api/market/${el.dataset.id}`); return "Listing removed"; },
+  async syncCatalog(el) { const game=el.dataset.game || VAL.game; const r=await api("POST","/api/items/sync-catalog",{game}); VAL.q=""; VAL.sheet=null; TR.all=[]; const readable=(r.sources||[]).filter(x=>x.parsed>0).length; const failed=(r.sources||[]).filter(x=>x.error).length; toast(`Sync ${game.toUpperCase()}: ${r.parsed||0} rows parsed; ${r.added||0} added; ${r.updated||0} updated; ${r.values||0} values; ${r.pictures||0} pictures. Sources with data: ${readable}/${(r.sources||[]).length}. ${failed ? failed+" source(s) failed." : ""}`,!failed && (r.parsed||0)>0); return ""; },
+  openAdmin() { view = "admin"; return ""; },
+  openTrade() { view = "trade"; return ""; },
+  trBack() { view = "home"; return ""; },
+  trPickGame(el) { if (TR.game !== el.dataset.g) { TR.all = []; TR.sides = {give: [], get: []}; TR.q = {give: "", get: ""}; } TR.game = el.dataset.g; return ""; },
+  trReset() { TR.sides = {give: [], get: []}; TR.q = {give: "", get: ""}; return ""; },
+  trAdd(el) {
+    const side = el.dataset.side, id = Number(el.dataset.id);
+    const item = TR.all.find(x => x.id === id); if (!item) return null;
+    const row = TR.sides[side].find(r => r.item.id === id);
+    if (row) row.qty += 1; else TR.sides[side].push({item, qty: 1});
+    return "";
+  },
+  trQty(el) {
+    const side = el.dataset.side, id = Number(el.dataset.id), d = Number(el.dataset.d);
+    const row = TR.sides[side].find(r => r.item.id === id); if (!row) return null;
+    row.qty += d;
+    if (row.qty < 1) TR.sides[side] = TR.sides[side].filter(r => r.item.id !== id);
+    return "";
+  },
+  trRemove(el) { const side = el.dataset.side, id = Number(el.dataset.id); TR.sides[side] = TR.sides[side].filter(r => r.item.id !== id); return ""; },
+  openValues() { view = "values"; VAL.game = null; VAL.q = ""; VAL.editing = null; return ""; },
+  pickGame(el) { VAL.game = el.dataset.g; VAL.q = ""; VAL.editing = null; VAL.sheet = null; return ""; },
+  pickSheet(el) { VAL.sheet = el.dataset.s; VAL.q = ""; VAL.editing = null; return ""; },
+  backToGames() { VAL.game = null; VAL.editing = null; return ""; },
+  editItem(el) { const id = Number(el.dataset.id); VAL.editing = VAL.editing === id ? null : id; return ""; },
+  cancelEditItem() { VAL.editing = null; return ""; },
+  pickItemPic(el) { const f = $("#itemFile"); f.dataset.id = el.dataset.id; f.click(); return null; },
+  async deleteItem(el) {
+    if (!confirm("Delete this item from the list?")) return null;
+    await api("DELETE", `/api/items/${el.dataset.id}`);
+    VAL.editing = null; return "Item deleted";
+  },
+  async toggleValueEditor(el) {
+    await api("PATCH", `/api/staff/${el.dataset.id}`, {can_edit_values: el.dataset.cur !== "1"});
+    return el.dataset.cur === "1" ? "Value editor removed" : "Value editor added";
+  },
+  async clearAssistant() { await api("PATCH", "/api/assistant", {url: ""}); return "Assistant link cleared"; },
+  backToAccount() { view = "account"; return ""; },
+  pickPic(el) { const f = $("#picFile"); f.dataset.kind = el.dataset.kind; f.dataset.user = el.dataset.user; f.click(); return null; },
+  cancelPic() { picPending = null; return ""; },
+  async savePic() {
+    const p = picPending; if (!p) return null;
+    const u = await api("PUT", `/api/users/${p.userId}/${p.kind}`, {data: p.dataUrl});
+    picPending = null;
+    if (me && u.id === me.id) me = u;
+    return p.kind === "avatar" ? "Picture saved" : "Banner saved";
+  },
+  async delPic(el) {
+    const kind = el.dataset.kind, id = Number(el.dataset.user);
+    const u = await api("DELETE", `/api/users/${id}/${kind}`);
+    if (picPending && picPending.userId === id && picPending.kind === kind) picPending = null;
+    if (me && u.id === me.id) me = u;
+    return kind === "avatar" ? "Picture removed" : "Banner removed";
+  },
+  editPics(el) { picTarget = Number(el.dataset.id); picPending = null; return ""; },
+  closePics() { picTarget = null; picPending = null; return ""; },
+  async ban(el) {
+    const reason = ((document.getElementById("banr-" + el.dataset.id) || {}).value || "").trim();
+    await api("POST", `/api/staff/${el.dataset.id}/ban`, {reason});
+    return "Account banned";
+  },
+  async unban(el) { await api("POST", `/api/staff/${el.dataset.id}/unban`, {}); return "Account unbanned"; },
+  async suspend(el) {
+    const id = el.dataset.id;
+    const reason = ((document.getElementById("susr-" + id) || {}).value || "").trim();
+    const local = (document.getElementById("susu-" + id) || {}).value || "";
+    const until = local ? new Date(local) : null;
+    if (!until || isNaN(until.getTime()) || until.getTime() <= Date.now()) throw new Error("Choose an expiry date and time in the future.");
+    await api("POST", `/api/staff/${id}/suspend`, {reason, until: until.toISOString()});
+    return "Account suspended";
+  },
+  async unsuspend(el) { await api("POST", `/api/staff/${el.dataset.id}/unsuspend`, {}); return "Suspension lifted"; },
+  async readAll() { await api("POST", "/api/notifications/read-all"); },
+  async respond(el) { await api("POST", `/api/transactions/${el.dataset.id}/respond`, {accept: el.dataset.accept === "1"}); return "Updated"; },
+  async move(el) {
+    const to = el.dataset.to; let reason = "";
+    if (to === ST.DISP || to === ST.CANCEL) {
+      reason = prompt(`Reason for "${to}" (required):`) || "";
+      if (reason.trim().length < 3) return null;
+    }
+    await api("POST", `/api/transactions/${el.dataset.id}/transition`, {to, reason});
+    return "Status updated";
+  },
+  async assign(el) {
+    const sel = document.getElementById("mm-" + el.dataset.id);
+    await api("POST", `/api/transactions/${el.dataset.id}/assign`, {mm_id: Number(sel.value)});
+    return "Assigned";
+  },
+  async setRole(el) {
+    const role = document.getElementById("role-" + el.dataset.id).value;
+    await api("PATCH", `/api/staff/${el.dataset.id}`, {role});
+    return "Role updated";
+  },
+  async delClient(el) {
+    await api("DELETE", `/api/clients/${el.dataset.id}`);
+    return "Client deleted";
+  },
+  async toggle(el) {
+    const cur = el.dataset.cur === "1";
+    await api("PATCH", `/api/staff/${el.dataset.id}`, {[el.dataset.field]: !cur});
+    return "Updated";
+  }
+};
+document.addEventListener("click", async e => {
+  const el = e.target.closest("[data-click]");
+  if (!el || el.disabled) return;
+  const action = CLICK[el.dataset.click];
+  if (typeof action !== "function") {
+    toast("This action is not available.", false);
+    return;
+  }
+  el.disabled = true;
+  try {
+    const msg = await action(el);
+    if (msg === null) return;
+    if (msg) toast(msg, true);
+    await render();
+  } catch (err) {
+    toast(err.message || "Action failed.", false);
+    if (restricted) await render();
+  } finally {
+    el.disabled = false;
+  }
+});
+
+let valSearchTimer = null;
+document.addEventListener("input", e => {
+  if (e.target.id === "trq-give" || e.target.id === "trq-get") {
+    const side = e.target.id === "trq-give" ? "give" : "get";
+    TR.q[side] = e.target.value;
+    const box = document.getElementById("trResults-" + side);
+    if (box) box.innerHTML = tradeResults(side);
+    return;
+  }
+  if (e.target.id !== "valSearch") return;
+  VAL.q = e.target.value.trim();
+  clearTimeout(valSearchTimer);
+  valSearchTimer = setTimeout(() => refreshValueGrid().catch(err => toast(err.message, false)), 220);
+});
+document.addEventListener("change", async e => {
+  if (e.target.id === "itemFile") {
+    const input = e.target, file = input.files[0]; input.value = "";
+    if (!file) return;
+    const id = Number(input.dataset.id);
+    if (!IMG_TYPES.includes(file.type)) return toast("Choose a JPG, PNG, WEBP, or GIF image.", false);
+    if (file.size > 2 * 1024 * 1024) return toast("Item picture is too large. Maximum is 2 MB.", false);
+    const dataUrl = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = () => reject(new Error("Could not read the file.")); r.readAsDataURL(file); }).catch(err => toast(err.message, false));
+    if (!dataUrl) return;
+    await api("PUT", `/api/items/${id}/image`, {data: dataUrl});
+    toast("Picture saved", true);
+    await refreshValueGrid();
+    return;
+  }
+  if (e.target.id !== "picFile") return;
+  const input = e.target, file = input.files[0]; input.value = "";
+  if (!file) return;
+  const kind = input.dataset.kind, userId = Number(input.dataset.user);
+  if (!IMG_TYPES.includes(file.type)) return toast("Choose a JPG, PNG, WEBP, or GIF image.", false);
+  if (file.size > IMG_MAX[kind]) return toast(`That image is too large. Maximum is ${IMG_MAX[kind] / 1024 / 1024} MB.`, false);
+  const dataUrl = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = () => reject(new Error("Could not read the file.")); r.readAsDataURL(file); }).catch(err => toast(err.message, false));
+  if (!dataUrl) return;
+  picPending = {userId, kind, dataUrl};
+  await render();
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "lbMetric") { LB.metric = e.target.value; render(); }
+  if (e.target.id === "lbCur") { LB.cur = e.target.value; render(); }
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "metricSel") { ovState.metric = e.target.value; render(); }
+  if (e.target.id === "curSel") { ovState.cur = e.target.value; render(); }
+});
+
+document.addEventListener("change", e => {
+  if (!e.target.dataset || !e.target.dataset.pick) return;
+  const c = (window.CLIENTS || {})[e.target.value]; const f = document.getElementById("reqForm");
+  if (!c || !f) return;
+  const side = e.target.dataset.pick;
+  f[side + "_name"].value = c.display_name || c.name;
+  f[side + "_fb"].value = c.fb_url;
+});
+
+// ---------- start ----------
+(async () => {
+  try { setupRequired = (await api("GET", "/api/status")).setup_required; } catch {}
+  try { me = await api("GET", "/api/me"); } catch { me = null; }
+  go("home");
+})();
+</script>
+</body>
+</html>
